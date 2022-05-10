@@ -1,0 +1,6 @@
+pandas
+matplotlib
+evo
+numpy
+dataclasses
+
