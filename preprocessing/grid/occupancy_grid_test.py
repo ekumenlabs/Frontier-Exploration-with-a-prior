@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from grid.occupancy_grid import OccupancyGrid
+from grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
 
 
 class TestOccupancyGrid(unittest.TestCase):
@@ -19,12 +19,11 @@ class TestOccupancyGrid(unittest.TestCase):
         grid[(4, 5)] = 100
         occupied_cells = grid.get_occupied_cells()
         empty_cells = grid.get_empty_cells()
-        self.assertEqual(len(empty_cells), 100 - 2)
-        self.assertEqual(len(occupied_cells), 2)
-        self.assertFalse([0,0] in empty_cells.tolist())
-        self.assertFalse([4, 5] in empty_cells.tolist())
-        self.assertTrue([0, 0] in occupied_cells.tolist())
-        self.assertTrue([4, 5] in occupied_cells.tolist())
+        self.assertTrue(is_cell_empty(empty_cells, (1, 0)))
+        self.assertFalse(is_cell_empty(empty_cells, (0, 0)))
+        self.assertFalse(is_cell_empty(empty_cells, (4, 5)))
+        self.assertFalse(is_cell_occupied(occupied_cells, (1, 0)))
+        self.assertTrue(is_cell_occupied(occupied_cells, (0, 0)))
 
 
 

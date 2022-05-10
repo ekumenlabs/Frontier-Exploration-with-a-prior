@@ -47,3 +47,12 @@ class OccupancyGrid:
     
     def get_empty_cells(self) -> np.ndarray:
         return np.transpose(np.nonzero(self._grid == 0))
+
+# this is provided as an external utility, so you can cache the occupied cells if you want
+
+def is_cell_occupied(occupied_cells: np.ndarray, cell: np.ndarray) -> bool:
+    return any(np.equal(occupied_cells, cell).all(1))
+
+def is_cell_empty(empty_cells: np.ndarray, cell: np.ndarray) -> bool:
+    return any(np.equal(empty_cells, cell).all(1))
+
