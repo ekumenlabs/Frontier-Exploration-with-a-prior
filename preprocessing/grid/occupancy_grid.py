@@ -3,6 +3,12 @@ import numpy as np
 from typing import *
 
 
+OCCUPIED = 100
+EMPTY = 0
+VIEWED = 5
+CELL_VALUES = [EMPTY, OCCUPIED, VIEWED]
+## colormap from cell_values
+
 class OccupancyGrid:
     def __init__(self, cell_size: float, x_cells: int, y_cells: int) -> None:
         self._cell_size = cell_size
@@ -40,7 +46,7 @@ class OccupancyGrid:
         ax = fig.gca()
 
         # Plot the grid
-        ax.pcolormesh(self.get_grid().T, cmap="PuBu", edgecolor="k", lw=2)
+        ax.pcolormesh(self.get_grid().T, cmap="Purples", vmin=EMPTY, vmax=OCCUPIED, edgecolor="k", lw=2)
         return fig
     def get_occupied_cells(self) -> np.ndarray:
         return np.transpose(np.nonzero(self._grid))

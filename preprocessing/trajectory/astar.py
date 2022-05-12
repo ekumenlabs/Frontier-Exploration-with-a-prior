@@ -6,6 +6,7 @@ import pdb
 from typing import Optional, List
 
 from matplotlib import pyplot as plt
+import numpy as np
 from grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
 from grid.raycasting import raycast_in_every_direction
 from grid.mock_grid import create_mock_grid
@@ -38,7 +39,7 @@ class AStar(object):
         self._start_cell = start_cell
         self._end_cell = goal_cell
         self._available_cells = grid.get_empty_cells()
-        self._range_in_cells = 9
+        self._range_in_cells = 5
         self._open_set = PriorityQueue()
         self._closed_set = []
 
@@ -51,7 +52,6 @@ class AStar(object):
         assert is_cell_empty(
             empty_cells=self._available_cells, cell=self._end_cell)
         open_node: Node = Node(position=self._start_cell)
-        max_raycast_range = self._range_in_cells * 8
         self._open_set.put(open_node)
         while not self._open_set.empty():
             open_node: Node = self._open_set.get()
@@ -59,13 +59,19 @@ class AStar(object):
                 return self._reconstruct_path(open_node)
             self._closed_set.append(open_node.position)
             possible_children = [Node(position=tuple(pos), cost=open_node.cost + cost(pos, open_node.position), heuristic=cost(
-                pos, self._end_cell), f=(cost(pos, open_node.position) + open_node.cost + 3 * cost(pos, self._end_cell)) *  ( max_raycast_range / len(self._raycast_in_every_direction(pos)) + 1), parent=open_node) for pos in self._raycast_in_every_direction(cell=open_node.position)]
+                pos, self._end_cell), f=(cost(pos, open_node.position) + open_node.cost + 3 * cost(pos, self._end_cell)) + 1, parent=open_node) for pos in self._raycast_in_every_direction(cell=open_node.position)]
             for child in possible_children:
                 if child.position not in self._closed_set:
                     self._open_set.put(child)
 
+
     def _raycast_in_every_direction(self, cell: tuple) -> List[tuple]:
-        return raycast_in_every_direction(available_cells=self._available_cells, start_cell=cell, range_in_cells=self._range_in_cells)
+        return raycast_in_every_direction(available_cells=self._available_cells, start_cell=cell, range_in_cells=self._range_in_cells, squarify=True, outermost=True)
+
+    # @functools.lru_cache
+    def _raycast(self, start_cell: tuple) -> list:
+        raycast_in_every_direction(
+            start_cell=start_cell, available_cells=self._available_cells, range_in_cells=self._range_in_cells)
 
     def _reconstruct_path(self, node: Node) -> Optional[List[tuple]]:
         path = []
@@ -76,16 +82,10 @@ class AStar(object):
         path.reverse()
         return path
 
-    @functools.lru_cache
-    def _raycast(self, start_cell: tuple) -> list:
-        raycast_in_every_direction(
-            start_cell=start_cell, available_cells=self._available_cells, range_in_cells=self._range_in_cells)
-
-
 if __name__ == "__main__":
     grid = create_mock_grid(num_x_cells=100, num_y_cells=100,
-                            cell_size=0.1, occupancy_percentage=0)
-    star = AStar(grid, start_cell=(3, 1), goal_cell=(50, 1))
+                            cell_size=0.1, occupancy_percentage=5)
+    star = AStar(grid, start_cell=(3, 1), goal_cell=(90, 50))
     a = star.solve()
     fig = grid.plot()
     ax = fig.gca()
