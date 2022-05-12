@@ -1,9 +1,12 @@
+from math import floor, sqrt
+import pdb
 from grid.occupancy_grid import is_cell_empty, is_cell_empty
 import functools
 
 import numpy as np
 
-ALLOWED_MOVEMENTS = [(np.cos(angle), np.sin(angle)) for angle in np.linspace(0, 2 * np.pi, num=16, endpoint=False)]
+num_rays = 70
+ALLOWED_MOVEMENTS = [(np.cos(angle), np.sin(angle)) for angle in np.linspace(0, 2 * np.pi, num=num_rays, endpoint=False)]
 
 def is_cell_in_array(cell: np.ndarray, array: np.ndarray) -> bool:
     return any(np.equal(array, cell).all(1))
@@ -24,12 +27,19 @@ def raycast_in_direction(start_cell: np.ndarray, direction: np.ndarray, availabl
         start_cell = moved_cell
     return ret
 
-def raycast_in_every_direction(start_cell: np.ndarray, available_cells: np.ndarray, range_in_cells:int) -> np.ndarray:
+def raycast_in_every_direction(start_cell: np.ndarray, available_cells: np.ndarray, range_in_cells:int, squarify=False) -> np.ndarray:
     ret = []
+    max_square_size = range_in_cells/ sqrt(2)
     for direction in ALLOWED_MOVEMENTS:
-        ret.extend(raycast_in_direction(start_cell=start_cell, direction=direction, available_cells=available_cells, range_in_cells=range_in_cells))
+        visible_cells = raycast_in_direction(start_cell=start_cell, direction=direction, available_cells=available_cells, range_in_cells=range_in_cells)
+        if not squarify:
+            ret.extend(visible_cells)
+            continue
+        visible_cells_relative = [np.subtract(cell, start_cell) for cell in visible_cells]
+        for idx, relative_cell in enumerate(visible_cells_relative):
+            if abs(np.dot(relative_cell, [1, 0])) >= max_square_size or abs(np.dot(relative_cell, [0, 1])) >= max_square_size:
+                continue
+            ret.append(visible_cells[idx])
+
     return np.unique(ret,axis=0)
-
-
-
-
+                
