@@ -5,7 +5,7 @@ from typing import *
 
 OCCUPIED = 100
 EMPTY = 0
-VIEWED = 5
+VIEWED = 50
 CELL_VALUES = [EMPTY, OCCUPIED, VIEWED]
 ## colormap from cell_values
 
@@ -49,10 +49,10 @@ class OccupancyGrid:
         ax.pcolormesh(self.get_grid().T, cmap="Purples", vmin=EMPTY, vmax=OCCUPIED, edgecolor="k", lw=2)
         return fig
     def get_occupied_cells(self) -> np.ndarray:
-        return np.transpose(np.nonzero(self._grid))
+        return np.transpose(np.nonzero(self._grid == OCCUPIED))
     
     def get_empty_cells(self) -> np.ndarray:
-        return np.transpose(np.nonzero(self._grid == 0))
+        return np.transpose(np.nonzero(self._grid == EMPTY))
 
 # this is provided as an external utility, so you can cache the occupied cells if you want
 

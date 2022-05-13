@@ -1,14 +1,18 @@
 
+from asyncio import futures
 from datetime import datetime
+import multiprocessing
 import pdb
 from random import random
+import threading
 import numpy as np
 from grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
 import matplotlib.pyplot as plt
 from grid.mock_grid import create_mock_grid
 from preprocessing.grid.raycasting import raycast_in_every_direction
 from typing import List
-from copy import copy
+from copy import copy,deepcopy
+from concurrent import futures
 
 def paginate(lst:List[any], n: int):
     for i in range(0, len(lst), n):
@@ -18,9 +22,9 @@ class WaypointsPicker(object):
     def __init__(self, grid: OccupancyGrid):
         self._grid = grid
         self._original_available_cells = grid.get_empty_cells()
-        self._viewed_grid = copy(grid)
+        self._viewed_grid = deepcopy(grid)
         self._cells_to_view = grid.get_empty_cells()
-        self._range_in_cells = 5
+        self._range_in_cells = 3
         self._rc_grid = None
 
     def _visible_grid(self) -> None:
@@ -40,22 +44,24 @@ class WaypointsPicker(object):
 
     def _raycasting_grid(self) -> None:
         time = datetime.now()
-        cpu_cnt = 8
+        cpu_cnt = multiprocessing.cpu_count()
         chunk_size = len(self._original_available_cells) // cpu_cnt
         ret = []
-        for index_to_process in paginate(range(len(self._original_available_cells)), chunk_size):
-            ret.extend(self._raycast_some(index_to_process))
-        print(f"Took {datetime.now() - time} to raycast")
+        promises = []
+        with futures.ProcessPoolExecutor(max_workers=40) as executor:
+            for index_to_process in paginate(range(len(self._original_available_cells)), chunk_size):
+                promises.append(executor.submit(self._raycast_some, indices_to_raycast=index_to_process))
+            for promise in promises:
+                ret.extend(promise.result())
+            print(f"Took {datetime.now() - time} to raycast")
         return ret
 
-    def _raycast_some(self,indices_to_raycast : List[int] ) -> None:
+    def _raycast_some(self,indices_to_raycast : List[int]) -> None:
         ret = []
         for index in indices_to_raycast:
             cell = self._original_available_cells[index]
             raycasted = self._raycast_in_every_direction(cell=cell,  available_cells=self._original_available_cells)
-            for cell in raycasted:
-                self._grid[tuple(cell)] = 50
-                ret.append(cell)
+            ret.extend([cell])
         return ret
             
 
@@ -67,7 +73,7 @@ class WaypointsPicker(object):
 
 
 if __name__ == "__main__":
-    grid = create_mock_grid(num_x_cells=50, num_y_cells=50, cell_size=0.1, occupancy_percentage=0)
+    grid = create_mock_grid(num_x_cells=40, num_y_cells=40, cell_size=0.1, occupancy_percentage=5)
     p = WaypointsPicker(grid=grid)
     cells_to_plot = p._raycasting_grid()
 
