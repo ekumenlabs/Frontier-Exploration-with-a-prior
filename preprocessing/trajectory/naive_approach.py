@@ -1,6 +1,7 @@
 import pdb
 import matplotlib
 import numpy as np
+from numpy import hypot
 from grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
 import matplotlib.pyplot as plt
 from grid.mock_grid import create_mock_grid
@@ -15,6 +16,8 @@ def paginate(lst: List[any], n: int):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
+def distance(a: tuple, b: tuple) -> int:
+    return hypot(a[0] - b[0], a[1] - b[1])
 
 class NaiveFrontierExploration(object):
     def __init__(self, grid: OccupancyGrid, start_cell: tuple):
@@ -50,10 +53,14 @@ class NaiveFrontierExploration(object):
                 pbar.update(len(raycasted_cells))
                 self._grid[cell_to_evaluate] = VIEWED
                 self._cells_to_view = self._grid.get_empty_cells()
-                # pick the next cell to navigate to
-                # TODO(Ramiro): pick the closest one instead of randomly picking one
-                next_cell_to_evaluate = tuple(
-                    frontier_cells[np.random.choice(range(len(frontier_cells)))])
+                # pick the next cell to navigate to (closest frontier)
+                next_cell_to_evaluate = None
+                best_distance = None
+                for cell in frontier_cells:
+                    cell_distance = cell_distance = distance(cell, cell_to_evaluate)
+                    if best_distance is None or cell_distance < best_distance:
+                        next_cell_to_evaluate = cell
+                        best_distance = cell_distance
                 # run astar to find the path between current point and chosen frontier point
                 ret.extend(self._astar.solve(
                     start_cell=cell_to_evaluate, end_cell=next_cell_to_evaluate))
