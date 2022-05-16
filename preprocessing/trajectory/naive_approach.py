@@ -101,4 +101,6 @@ if __name__ == "__main__":
     to_plot = np.add(to_plot, np.ones_like(to_plot) * 0.5)
     ax.plot(to_plot[0], to_plot[1],
             label="Naive frontier exploration trajectory")
+    plt.legend(loc='best')
+
     plt.show()
