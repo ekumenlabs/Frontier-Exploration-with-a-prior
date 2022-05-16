@@ -1,13 +1,12 @@
 from __future__ import annotations
 import functools
-from heapq import heappush, heappop
 from math import hypot
 import pdb
 from typing import Optional, List
 
 from matplotlib import pyplot as plt
 import numpy as np
-from grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
+from grid.occupancy_grid import OccupancyGrid, is_cell_empty
 from grid.raycasting import raycast_in_every_direction
 from grid.mock_grid import create_mock_grid
 from queue import PriorityQueue
@@ -89,10 +88,9 @@ if __name__ == "__main__":
     grid = create_mock_grid(num_x_cells=100, num_y_cells=100,
                             cell_size=0.1, occupancy_percentage=5)
     star = AStar(grid)
-    a = star.solve(start_cell=(5, 5), end_cell=(98, 89))
+    a = star.solve(start_cell=(5, 5), end_cell=(96, 89))
     fig = grid.plot()
     ax = fig.gca()
     for cell in a:
         ax.plot(cell[0] + 0.5, cell[1] + 0.5, 'rx')
     plt.show()
-    print(a)

@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+import matplotlib
 import numpy as np
 from typing import *
 
@@ -46,7 +47,9 @@ class OccupancyGrid:
         ax = fig.gca()
 
         # Plot the grid
-        ax.pcolormesh(self.get_grid().T, cmap="Purples", vmin=EMPTY, vmax=OCCUPIED, edgecolor="k", lw=2)
+        cmap = plt.cm.get_cmap('Purples', 3) 
+        ax.pcolormesh(self.get_grid().T, cmap=cmap, vmin=EMPTY, vmax=OCCUPIED, edgecolor="k", lw=2)
+        fig.colorbar(plt.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin=EMPTY, vmax=OCCUPIED), cmap=cmap), ax=ax)
         return fig
     def get_occupied_cells(self) -> np.ndarray:
         return np.transpose(np.nonzero(self._grid == OCCUPIED))
