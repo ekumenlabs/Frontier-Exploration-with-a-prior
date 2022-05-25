@@ -3,8 +3,8 @@ import ezdxf
 import geopandas as gpd
 import pandas as pd
 
-from preprocessing.layout.polygons import Square
-from preprocessing.grid.occupancy_grid import OccupancyGrid
+from polygons import Square
+from grid.occupancy_grid import OccupancyGrid
 
 class LayoutReader:
     def __init__(self):

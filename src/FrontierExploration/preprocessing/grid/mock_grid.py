@@ -1,6 +1,7 @@
 import numpy as np
-from grid.occupancy_grid import OccupancyGrid
 import matplotlib.pyplot as plt
+
+from grid.occupancy_grid import OccupancyGrid
 
 
 def create_mock_grid(
