@@ -13,8 +13,8 @@ with open('requirements.txt') as f:
                     author='',
                     author_email='',
                     license='Private',
-                    packages=setuptools.find_packages(where="preprocessing"),
-                    package_dir={"": "preprocessing"},
+                    packages=setuptools.find_packages(where="src"),
+                    package_dir={"": "src"},
                     include_package_data=True,
                     zip_safe=False,
                     install_requires=required)
