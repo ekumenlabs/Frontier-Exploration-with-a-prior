@@ -1,4 +1,12 @@
 frontier_exploration_with_a_prior
 .vscode
 **.pyc
-**/__pycache__/**
+.vscode/
+venv/
+*__pycache__*
+*egg-info*
+*cache*
+*.egg*
+build/
+dist/
+*.log

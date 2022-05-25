@@ -1,4 +1,7 @@
-pandas
+geopandas==0.10.2
+pandas==1.4.2
+ezdxf==0.17.2
+shapely==1.8.2
 matplotlib
 evo
 numpy
