@@ -40,9 +40,9 @@ class OccupancyGrid:
         assert value >= 0 and value <= 100
         self._grid[index] = value
 
-    def plot(self) -> plt.figure:
+    def plot(self, *args, **kwargs) -> plt.figure:
         # Create a new figure
-        fig = plt.figure()
+        fig = plt.figure(*args, **kwargs)
 
         ax = fig.gca()
 
