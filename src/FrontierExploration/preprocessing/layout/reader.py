@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import ezdxf
 import geopandas as gpd
 import pandas as pd
@@ -6,20 +6,22 @@ import pandas as pd
 from FrontierExploration.preprocessing.layout.polygons import Square
 from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
 
+
 class LayoutReader:
     def __init__(self):
         self.occupancy_gdf = None
         self.layout_polygon = None
 
     @staticmethod
-    def clean_and_save(file_dir: str, output_file_dir: str, layers: List[str]):
+    def clean_and_save(file_dir: str, output_file_dir: str, layers: List[str], entity_types: Optional[List[str]]=["*"]):
       msp = ezdxf.readfile(file_dir).modelspace()
       clean_doc = ezdxf.new('R2010')
       clean_msp = clean_doc.modelspace()
 
       for layer in layers:
-        for e in msp.query(f"*[layer=='{layer}']"):
-          clean_msp.add_foreign_entity(e)
+        for entity_type in entity_types:
+          for e in msp.query(f"{entity_type} [layer=='{layer}']"):
+            clean_msp.add_foreign_entity(e)
       clean_doc.saveas(output_file_dir)
 
 
@@ -30,9 +32,8 @@ class OccupancyDataFrame:
         layout = gpd.read_file(file_dir)
         clean_layout = layout['geometry']
         xmin, ymin, xmax, ymax = clean_layout.total_bounds
-
-        for xstart in range(int(xmin) - square_size, int(xmax), square_size):
-            for ystart in range(int(ymin) - square_size, int(ymax), square_size):
+        for xstart in np.nditer(np.arange(int(xmin) - square_size, int(xmax), square_size)):
+            for ystart in  np.nditer(np.arange(int(ymin) - square_size, int(ymax), square_size)):
                 polygons_list.append(Square(square_size, xstart, ystart))
 
         self.layout_df = gpd.GeoDataFrame(geometry=polygons_list)
