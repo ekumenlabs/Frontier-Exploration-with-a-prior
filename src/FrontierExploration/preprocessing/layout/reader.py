@@ -2,6 +2,7 @@ from typing import List, Optional
 import ezdxf
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 
 from FrontierExploration.preprocessing.layout.polygons import Square
 from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
