@@ -9,10 +9,6 @@ from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
 
 
 class LayoutReader:
-    def __init__(self):
-        self.occupancy_gdf = None
-        self.layout_polygon = None
-
     @staticmethod
     def clean_and_save(file_dir: str, output_file_dir: str, layers: List[str], entity_types: Optional[List[str]]=["*"]):
       msp = ezdxf.readfile(file_dir).modelspace()
