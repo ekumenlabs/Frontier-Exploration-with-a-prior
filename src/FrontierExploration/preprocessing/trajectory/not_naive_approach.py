@@ -1,14 +1,14 @@
-from math import hypot
-from concurrent.futures import ProcessPoolExecutor
-import numpy as np
-from grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
-import matplotlib.pyplot as plt
-from grid.mock_grid import create_mock_grid
-from preprocessing.grid.raycasting import raycast_in_every_direction
-from typing import List
 from copy import deepcopy
-import tqdm
-from trajectory.astar import AStar
+from math import hypot
+import matplotlib.pyplot as plt
+import numpy as np
+import tqdm 
+from typing import List
+
+from FrontierExploration.preprocessing.grid.raycasting import raycast_in_every_direction
+from FrontierExploration.preprocessing.trajectory.astar import AStar
+from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
+from FrontierExploration.preprocessing.grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
 
 
 def paginate(lst: List[any], n: int):

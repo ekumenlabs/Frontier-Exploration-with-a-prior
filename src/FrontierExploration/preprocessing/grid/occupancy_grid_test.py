@@ -1,7 +1,7 @@
 import unittest
-
 import numpy as np
-from grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
+
+from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid, is_cell_empty, is_cell_occupied
 
 
 class TestOccupancyGrid(unittest.TestCase):

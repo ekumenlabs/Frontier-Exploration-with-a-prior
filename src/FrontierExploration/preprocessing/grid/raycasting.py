@@ -1,8 +1,7 @@
 from math import sqrt
-import pdb
-from grid.occupancy_grid import is_cell_empty, is_cell_empty
-
 import numpy as np
+
+from FrontierExploration.preprocessing.grid.occupancy_grid import is_cell_empty, is_cell_empty
 
 num_rays = 70
 ALLOWED_MOVEMENTS = [(np.cos(angle), np.sin(angle)) for angle in np.linspace(0, 2 * np.pi, num=num_rays, endpoint=False)]
