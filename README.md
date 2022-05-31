@@ -1,12 +1,51 @@
-# final_proyect
+# Frontier Exploration with a prior
 
-## Installation (has to be run only once.)
-- Install python3 virtualenv
+## Dependency
+
+- Python 3.9
+
+### Check your Python version
+
 ```sh
-sudo apt install python3-pip
-pip3 install --upgrade virtualenv
-python3 -m virtualenv frontier_exploration_with_a_prior
+python --version
+```
 
+---
+
+## Install project as package
+
+```sh
+python -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Exploration-with-a-prior.git@master
+```
+
+---
+
+## Install for local dev
+
+### Create virtualenv
+
+```sh
+python -m pip install --upgrade pip venv
+python -m venv ./venv
+```
+
+### Activate virtualenv
+
+```sh
+source ./venv/bin/activate
+```
+
+### Install dependencies and local project
+
+```sh
+python -m pip install -r requirements.txt
+python -m pip install -e .
+```
+
+## When you're done:
+
+```sh
+deactivate
 ```
 
 ## Dev workflow
@@ -15,8 +54,4 @@ python3 -m virtualenv frontier_exploration_with_a_prior
 source dev.sh
 ```
 
-When you're done:
-```sh
-deactivate
-```
-
+---
