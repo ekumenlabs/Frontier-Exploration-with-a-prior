@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy import hypot
 
-from FrontierExploration.preprocessing.grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
+from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid, is_cell_empty, VIEWED, EMPTY
 from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
 from FrontierExploration.preprocessing.grid.raycasting import raycast_in_every_direction
 from FrontierExploration.preprocessing.trajectory.astar import AStar

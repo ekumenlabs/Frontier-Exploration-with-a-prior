@@ -27,7 +27,6 @@ class BlueprintAwareFrontierExploration(object):
         self._range_in_cells = 3
         self._start_cell = start_cell
         self._astar = AStar(grid=deepcopy(grid))
-        self._raycasting_grid = grid
         self._visibility_grid = {}
 
     def solve(self) -> List[tuple]:
