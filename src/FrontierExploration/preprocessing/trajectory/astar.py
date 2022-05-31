@@ -1,16 +1,15 @@
 from __future__ import annotations
 import functools
 from math import hypot
-import pdb
+from queue import PriorityQueue
+from dataclasses import dataclass
 from typing import Optional, List
 
 from matplotlib import pyplot as plt
 import numpy as np
-from grid.occupancy_grid import OccupancyGrid, is_cell_empty
-from grid.raycasting import raycast_in_every_direction
-from grid.mock_grid import create_mock_grid
-from queue import PriorityQueue
-from dataclasses import dataclass
+from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid, is_cell_empty
+from FrontierExploration.preprocessing.grid.raycasting import raycast_in_every_direction
+from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
 
 
 @dataclass

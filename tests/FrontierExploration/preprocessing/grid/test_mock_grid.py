@@ -1,6 +1,7 @@
 import unittest
-from mock_grid import create_mock_grid
 import numpy as np
+
+from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
 
 # define testcase
 class TestMockGrid(unittest.TestCase):

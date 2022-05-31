@@ -1,7 +1,8 @@
-from matplotlib import pyplot as plt
-from grid.raycasting import raycast_in_every_direction
-from grid.mock_grid import create_mock_grid
 import unittest
+from matplotlib import pyplot as plt
+
+from FrontierExploration.preprocessing.grid.raycasting import raycast_in_every_direction
+from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
 
 
 class TestRaycasting(unittest.TestCase):

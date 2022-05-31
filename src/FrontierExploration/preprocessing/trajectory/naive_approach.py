@@ -1,34 +1,30 @@
-from math import hypot
-from concurrent.futures import ProcessPoolExecutor
-import numpy as np
-from grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
-import matplotlib.pyplot as plt
-from grid.mock_grid import create_mock_grid
-from preprocessing.grid.raycasting import raycast_in_every_direction
+import tqdm
 from typing import List
 from copy import deepcopy
-import tqdm
-from trajectory.astar import AStar
+import matplotlib.pyplot as plt
+import numpy as np
+from numpy import hypot
+
+from FrontierExploration.preprocessing.grid.occupancy_grid import CELL_VALUES, OCCUPIED, OccupancyGrid, is_cell_empty, VIEWED, EMPTY
+from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
+from FrontierExploration.preprocessing.grid.raycasting import raycast_in_every_direction
+from FrontierExploration.preprocessing.trajectory.astar import AStar
 
 
 def paginate(lst: List[any], n: int):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-
 def distance(a: tuple, b: tuple) -> int:
     return hypot(a[0] - b[0], a[1] - b[1])
 
-class BlueprintAwareFrontierExploration(object):
+class NaiveFrontierExploration(object):
     def __init__(self, grid: OccupancyGrid, start_cell: tuple):
         self._grid = grid
         self._cells_to_view = grid.get_empty_cells()
-        self._original_empty_cells = deepcopy(self._cells_to_view)
         self._range_in_cells = 3
         self._start_cell = start_cell
         self._astar = AStar(grid=deepcopy(grid))
-        self._raycasting_grid = grid
-        self._visibility_grid = {}
 
     def solve(self) -> List[tuple]:
         """
@@ -47,7 +43,7 @@ class BlueprintAwareFrontierExploration(object):
                 last_cells_to_view = len(self._cells_to_view)
                 # check which cells you can view from the current cell
                 raycasted_cells = self._raycast_in_every_direction(
-                    cell=cell_to_evaluate, available_cells=self._original_empty_cells)
+                    cell=cell_to_evaluate, available_cells=self._cells_to_view)
                 # mark them as viewed, and check whether they're frontiers or not (frontier == boundary between explored and unexplored)
                 for cell in raycasted_cells:
                     self._grid[tuple(cell)] = VIEWED
@@ -58,16 +54,14 @@ class BlueprintAwareFrontierExploration(object):
                 self._cells_to_view = self._grid.get_empty_cells()
                 pbar.update(last_cells_to_view - len(self._cells_to_view))
                 last_cells_to_view = len(self._cells_to_view)
+                # pick the next cell to navigate to (closest frontier)
                 next_cell_to_evaluate = None
-                best_visibility = None
-                    
-                self._raycast_some(cells=frontier_cells)
+                best_distance = None
                 for cell in frontier_cells:
-                    if best_visibility is None or len(self._visibility_grid[cell] > best_visibility):
+                    cell_distance = cell_distance = distance(cell, cell_to_evaluate)
+                    if best_distance is None or cell_distance < best_distance:
                         next_cell_to_evaluate = cell
-                        best_visibility = len(self._visibility_grid[cell])
-
-                    
+                        best_distance = cell_distance
                 # run astar to find the path between current point and chosen frontier point
                 ret.extend(self._astar.solve(
                     start_cell=cell_to_evaluate, end_cell=next_cell_to_evaluate))
@@ -101,19 +95,12 @@ class BlueprintAwareFrontierExploration(object):
 
     def plot(self):
         return self._grid.plot()
-    
-    def _raycast_some(self, cells: List[tuple]) -> None:
-        for cell in cells:
-            self._visibility_grid[cell] = self._raycast_in_every_direction(cell=cell, available_cells=self._cells_to_view)
-        
-
-        
 
 
 if __name__ == "__main__":
     grid = create_mock_grid(num_x_cells=30, num_y_cells=30,
                             cell_size=0.1, occupancy_percentage=10)
-    p = BlueprintAwareFrontierExploration(grid=grid, start_cell=(2, 5))
+    p = NaiveFrontierExploration(grid=grid, start_cell=(2, 5))
     path = p.solve()
 
     fig = p.plot()
@@ -121,7 +108,7 @@ if __name__ == "__main__":
     to_plot = np.asarray(path).T
     to_plot = np.add(to_plot, np.ones_like(to_plot) * 0.5)
     ax.plot(to_plot[0], to_plot[1],
-            label="Blueprint aware frontier exploration trajectory")
+            label="Naive frontier exploration trajectory")
     plt.legend(loc='best')
     print(f"The robot should take {len(path)} steps to explore the grid.")
 
