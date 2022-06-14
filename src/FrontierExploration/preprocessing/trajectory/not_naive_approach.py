@@ -38,11 +38,11 @@ class BlueprintAwareFrontierExploration(object):
         """
         cell_to_evaluate = self._start_cell
         ret = []
-        frontier_cells = []
+        frontier_cells = [ self._start_cell ]
         cells_to_explore = len(self._cells_to_view)
 
         with tqdm.tqdm(total=cells_to_explore) as pbar:
-            while len(self._cells_to_view) > 1:
+            while len(frontier_cells) > 1:
                 last_cells_to_view = len(self._cells_to_view)
                 # check which cells you can view from the current cell
                 raycasted_cells = self._raycast_in_every_direction(
@@ -118,6 +118,8 @@ if __name__ == "__main__":
     fig = p.plot()
     ax = fig.gca()
     to_plot = np.asarray(path).T
+    
+    
     to_plot = np.add(to_plot, np.ones_like(to_plot) * 0.5)
     ax.plot(to_plot[0], to_plot[1],
             label="Blueprint aware frontier exploration trajectory")

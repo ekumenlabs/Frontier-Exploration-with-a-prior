@@ -83,10 +83,10 @@ class AStar(object):
 
 
 if __name__ == "__main__":
-    grid = create_mock_grid(num_x_cells=100, num_y_cells=100,
-                            cell_size=0.1, occupancy_percentage=5)
+    grid = create_mock_grid(num_x_cells=20, num_y_cells=20,
+                            cell_size=0.1, occupancy_percentage=30)
     star = AStar(grid)
-    a = star.solve(start_cell=(5, 5), end_cell=(96, 89))
+    a = star.solve(start_cell=(6, 5), end_cell=(12, 18))
     fig = grid.plot()
     ax = fig.gca()
     for cell in a:

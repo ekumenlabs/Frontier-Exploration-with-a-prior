@@ -35,11 +35,11 @@ class NaiveFrontierExploration(object):
         """
         cell_to_evaluate = self._start_cell
         ret = []
-        frontier_cells = []
+        frontier_cells = [cell_to_evaluate]
         cells_to_explore = len(self._cells_to_view)
 
         with tqdm.tqdm(total=cells_to_explore) as pbar:
-            while len(self._cells_to_view) > 1:
+            while len(frontier_cells) != 0:
                 last_cells_to_view = len(self._cells_to_view)
                 # check which cells you can view from the current cell
                 raycasted_cells = self._raycast_in_every_direction(
