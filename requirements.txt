@@ -6,5 +6,4 @@ matplotlib
 evo
 numpy
 dataclasses
-tqdm
-
+tqdm 
