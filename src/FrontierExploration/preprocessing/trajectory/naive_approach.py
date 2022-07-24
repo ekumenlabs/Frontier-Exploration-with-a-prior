@@ -18,11 +18,12 @@ class NaiveFrontierExploration(TrajectorySolver):
         returns a list of tuples, that represents the trajectory the robot should take to explore the whole grid.
         """
         cells_to_evaluate = self._get_cells_to_evaluate()
-        ret = self._resolve_trajectory(cells_to_evaluate)     
+        ret = self.resolve_trajectory(cells_to_evaluate)     
         return ret
 
 
-    def _get_next_cell_to_evaluate(self, frontier_cells, cell_to_evaluate):
+    def get_next_cell_to_evaluate(self, frontier_cells, cell_to_evaluate):
+        """In the Naive approach, on each step, we select the closest of all the frontier cells."""
         next_cell_to_evaluate = None
         best_distance = None
         for cell in frontier_cells:

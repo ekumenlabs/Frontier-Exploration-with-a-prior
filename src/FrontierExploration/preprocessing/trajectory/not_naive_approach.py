@@ -19,15 +19,15 @@ class BlueprintAwareFrontierExploration(TrajectorySolver):
         returns a list of tuples, that represents the trajectory the robot should take to explore the whole grid.
         """
         cells_to_evaluate = self._get_cells_to_evaluate()
-        ret = self._resolve_trajectory(cells_to_evaluate)
+        ret = self.resolve_trajectory(cells_to_evaluate)
         return ret
 
-    def _get_next_cell_to_evaluate(self, frontier_cells, cell_to_evaluate=None):
-        """According to the visibility of all the frontier cells, the next cell to move to is decided"""
+    def get_next_cell_to_evaluate(self, frontier_cells, cell_to_evaluate=None):
+        """In the Blueprint Aware approach, we select the next cell to move to, according on the calculated visibility."""
         next_cell_to_evaluate = None
         best_visibility = None
             
-        self._raycast_some(cells=frontier_cells)
+        self._raycast_some(frontier_cells)
         for cell in frontier_cells:
             if best_visibility is None or len(self._visibility_grid[cell] > best_visibility):
                 next_cell_to_evaluate = cell

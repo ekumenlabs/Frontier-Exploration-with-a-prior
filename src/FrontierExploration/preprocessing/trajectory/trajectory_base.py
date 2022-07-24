@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import tqdm
 from abc import abstractmethod
 from copy import deepcopy
@@ -26,14 +27,21 @@ class TrajectorySolver(object):
     def solve(self):
         "Method that solves given grid"
 
-    def _resolve_trajectory(self, cells_to_evaluate):
+    @abstractmethod
+    def get_next_cell_to_evaluate(self, frontier_cells, cell_to_evaluate):
+        "Method that decides which cell to move to. It will depend on the trajectory approach."
+
+    def resolve_trajectory(self, cells_to_evaluate):
         ret = []
         for cell_to_evaluate, next_cell_to_evaluate in pairwise(cells_to_evaluate):
-            # run astar to find the path between current point and chosen frontier point
-            ret.extend(self._astar.solve(start_cell=cell_to_evaluate, end_cell=next_cell_to_evaluate))
-            # reset the astar algorithm
-            self._astar.reset()
+            ret.extend(self._resolve_trajectory_between_points(start_cell=cell_to_evaluate, end_cell=next_cell_to_evaluate))
         return ret
+
+    def _resolve_trajectory_between_points(self, start_cell, end_cell):
+        trajectory = self._astar.solve(start_cell=start_cell, end_cell=end_cell)
+        # reset the astar algorithm
+        self._astar.reset()
+        return trajectory
 
     def _get_cells_to_evaluate(self):
         cell_to_evaluate = self._start_cell
@@ -52,7 +60,7 @@ class TrajectorySolver(object):
                 pbar.update(last_cells_to_view - self.cells_to_view)
 
                 # pick the next cell to navigate to
-                next_cell_to_evaluate = self._get_next_cell_to_evaluate(frontier_cells, cell_to_evaluate)
+                next_cell_to_evaluate = self.get_next_cell_to_evaluate(frontier_cells, cell_to_evaluate)
                 if next_cell_to_evaluate is None:
                     break
                 cells_to_evaluate.append(next_cell_to_evaluate)
