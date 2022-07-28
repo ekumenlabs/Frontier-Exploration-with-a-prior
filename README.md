@@ -20,34 +20,6 @@ python -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Expl
 
 ---
 
-## Install for local dev
-
-### Create virtualenv
-
-```sh
-python -m pip install --upgrade pip venv
-python -m venv ./venv
-```
-
-### Activate virtualenv
-
-```sh
-source ./venv/bin/activate
-```
-
-### Install dependencies and local project
-
-```sh
-python -m pip install -r requirements.txt
-python -m pip install -e .
-```
-
-## When you're done:
-
-```sh
-deactivate
-```
-
 ## Dev workflow
 
 ```sh
@@ -55,3 +27,11 @@ source dev.sh
 ```
 
 ---
+
+
+## When you're done:
+
+```sh
+deactivate
+```
+
