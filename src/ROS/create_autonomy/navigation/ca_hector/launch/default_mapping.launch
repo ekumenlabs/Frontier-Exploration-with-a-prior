@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<!-- NOTE:
+1. Maps created with Hector SLAM break with the create's odom shift:
+For the gazebo house environment, the maps created with Hector SLAM
+place the (0, 0) at the start position of the robot and not at Gazebo's
+(0,0). This will break when applying odom's shift for the create, as
+it will push the robot out of the map.
+
+This issue is being addressed at
+https://github.com/RoboticaUtnFrba/create_autonomy/pull/214.
+
+2. If you launch hector mapping without geotiff, you can save the
+map using the map server:
+
+rosrun map_server map_saver -f my_map
+-->
+
+<launch>
+  <!-- Create and robot number identifiers -->
+  <arg name="ns"    default="create1"                 doc="Namespace of the robot"/>
+  <arg name="laser" default="$(optenv LASER rplidar)" doc="Laser for mapping the environment"/>
+
+  <node pkg="hector_mapping" type="hector_mapping" name="hector_mapping" output="screen">
+    <rosparam file="$(find ca_hector)/config/hector_mapping.yaml" command="load"/>
+
+    <!-- Frame names -->
+    <param name="base_frame" value="$(arg ns)/base_link" />
+    <param name="odom_frame" value="$(arg ns)/odom" />
+
+    <!-- Advertising config -->
+    <param name="scan_topic" value="$(arg laser)/scan"/>
+
+    <!-- Remapping -->
+    <remap from="/$(arg ns)/map"          to="/map" />
+    <remap from="/$(arg ns)/map_metadata" to="/map_metadata"/>
+  </node>
+
+</launch>
+
+

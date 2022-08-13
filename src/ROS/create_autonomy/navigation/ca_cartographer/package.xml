@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ca_cartographer</name>
+  <version>0.0.0</version>
+  <description>Cartographer launchfiles and configuration for mapping and pure localization</description>
+
+  <maintainer email="christiannbarcelo@gmail.com">Christian Barcelo</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cartographer_ros</build_depend>
+
+  <exec_depend>cartographer_ros</exec_depend>
+
+  <export/>
+</package>

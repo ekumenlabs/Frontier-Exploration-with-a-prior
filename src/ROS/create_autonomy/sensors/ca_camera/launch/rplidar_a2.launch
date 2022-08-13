@@ -1,0 +1,9 @@
+<launch>
+  <arg name="ns" default="create1" doc="Namespace of the robot"/>
+
+  <node name="rplidar_a2" pkg="rplidar_ros" type="rplidarNode" output="screen">
+    <rosparam command="load" file="$(find ca_camera)/config/rplidar.yaml"/>
+    <param name="frame_id" type="string" value="$(arg ns)/laser_link"/>
+    <remap from="scan" to="rplidar/scan"/>
+  </node>
+</launch>

@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+<xacro:macro name="battery_sensor"
+             params="name:=battery parent:=base_footprint namespace:=create *origin">
+
+  <xacro:include filename="$(find ca_description)/urdf/utils/inertias.xacro"/>
+  <xacro:include filename="$(find ca_description)/urdf/utils/conversions.xacro"/>
+
+  <xacro:property name="parent_link" value="${parent}"/>
+  <xacro:property name="link_name"   value="${name}_link"/>
+
+  <xacro:property name="mass"        value="1"/>
+  <xacro:property name="size_x_in"   value="2.2"/>
+  <xacro:property name="size_y_in"   value="5.7"/>
+  <xacro:property name="size_z_in"   value="2.5"/>
+
+  <joint name="${name}_joint" type="fixed">
+    <xacro:insert_block name="origin"/>
+    <parent link="${parent_link}"/>
+    <child link="${link_name}"/>
+  </joint>
+
+  <link name="${link_name}">
+    <xacro:inertial_cuboid mass="${mass}"
+                           x_length="${size_x_in*in_to_m}"
+                           y_length="${size_y_in*in_to_m}"
+                           z_length="${size_z_in*in_to_m}"/>
+    <visual>
+      <geometry>
+        <box size="${size_x_in*in_to_m} ${size_y_in*in_to_m} ${size_z_in*in_to_m}"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <gazebo reference="${link_name}">
+    <material>Gazebo/ZincYellow</material>
+  </gazebo>
+
+   <gazebo>
+    <xacro:property name="params_yaml"   value="$(find ca_gazebo)/config/battery.yaml"/>
+    <xacro:property name="battery_param" value="${load_yaml(params_yaml)}"/>
+
+    <plugin filename="libcreate_battery_plugin.so" name="${name}">
+      <frame_id>${namespace}/${link_name}</frame_id>
+      <battery_topic>${name}/status</battery_topic>
+      <consumer_topic>${name}/consumer</consumer_topic>
+      <battery_voltage_topic>${name}/voltage</battery_voltage_topic>
+      <publish_voltage>${battery_param['publish_voltage']}</publish_voltage>
+      <num_of_consumers>${battery_param['num_of_consumers']}</num_of_consumers>
+      <technology>${battery_param['technology']}</technology>
+      <design_capacity>${battery_param['design_capacity']}</design_capacity>
+      <number_of_cells>${battery_param['number_of_cells']}</number_of_cells>
+      <nominal_voltage>${battery_param['nominal_voltage']}</nominal_voltage>
+      <full_charge_voltage>${battery_param['full_charge_voltage']}</full_charge_voltage>
+      <cut_off_voltage>${battery_param['cut_off_voltage']}</cut_off_voltage>
+      <internal_resistance>${battery_param['internal_resistance']}</internal_resistance>
+      <current_filter_tau>${battery_param['current_filter_tau']}</current_filter_tau>
+      <polarization_constant>${battery_param['polarization_constant']}</polarization_constant>
+      <exponential_voltage>${battery_param['exponential_voltage']}</exponential_voltage>
+      <exponential_capacity>${battery_param['exponential_capacity']}</exponential_capacity>
+      <characteristic_time>${battery_param['characteristic_time']}</characteristic_time>
+      <reversible_voltage_temp>${battery_param['reversible_voltage_temp']}</reversible_voltage_temp>
+      <arrhenius_rate_polarization>${battery_param['arrhenius_rate_polarization']}</arrhenius_rate_polarization>
+      <capacity_temp_coeff>${battery_param['capacity_temp_coeff']}</capacity_temp_coeff>
+      <design_temperature>${battery_param['design_temperature']}</design_temperature>
+      <temperature_response_tau>${battery_param['temperature_response_tau']}</temperature_response_tau>
+      <use_nonlinear_model>True</use_nonlinear_model>
+      <update_rate>10.0</update_rate>
+      <rosDebugLevel>Debug</rosDebugLevel>
+    </plugin>
+  </gazebo>
+
+</xacro:macro>
+
+</robot>

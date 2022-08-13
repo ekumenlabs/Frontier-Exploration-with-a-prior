@@ -1,0 +1,2 @@
+#!/bin/bash
+rqt -s ca_dashboard

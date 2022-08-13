@@ -1,0 +1,8 @@
+<launch>
+  <!--
+    Streams raspicam frames to the specified IP address
+  -->
+  <arg name="IP" default=""/>
+
+  <node name="raspicam_stream" pkg="ca_camera" type="stream_raspicam" args="$(arg IP)" output="screen"/>
+</launch>

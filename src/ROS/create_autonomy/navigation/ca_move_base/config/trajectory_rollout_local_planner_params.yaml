@@ -1,0 +1,39 @@
+# Move base
+base_local_planner: "base_local_planner/TrajectoryPlannerROS"
+
+# Move base flex
+controllers:
+  - name: 'TrajectoryPlannerROS'
+    type: 'base_local_planner/TrajectoryPlannerROS'
+
+TrajectoryPlannerROS:
+
+  acc_lim_x: 0.8
+  acc_lim_y: 0.0
+  acc_lim_theta: 5.0
+
+  max_vel_x: 0.3
+  min_vel_x: 0.0
+  max_vel_trans: 0.25
+  min_vel_trans: 0.1
+
+  max_vel_theta: 1.5
+  min_vel_theta: -1.5
+  min_in_place_vel_theta: 0.3
+  escape_vel: -0.4
+
+  holonomic_robot: false
+  y_vels: []
+  xy_goal_tolerance: 0.15
+  yaw_goal_tolerance: 0.3
+  latch_xy_goal_tolerance: true
+
+  sim_time: 1.0
+  sim_granularity: 0.025
+  angular_sim_granularity: 0.025
+  vx_samples: 6
+  vtheta_samples: 20
+  controller_frequency: 20
+
+  public_cost_grid_pc: true
+  meter_scoring: true

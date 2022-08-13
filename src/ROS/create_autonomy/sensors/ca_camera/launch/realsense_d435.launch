@@ -1,0 +1,83 @@
+<!--
+Copyright (c) 2018 Intel Corporation
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+     http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!--
+A launch file, derived from rgbd_launch and customized for Realsense ROS driver,
+to publish XYZRGB point cloud like an OpenNI camera.
+
+NOTICE: To use this launch file you must first install ros packages
+image_proc and depth_image_proc.
+-->
+<launch>
+  <arg name="ns" default="create1" doc="Namespace of the robot"/>
+
+  <arg name="manager"     value="realsense2_camera_manager"/>
+
+  <!-- rgbd_launch specific arguments -->
+  <!-- Arguments for remapping all device namespaces -->
+  <arg name="rgb"                  value="rgb" />
+  <arg name="depth"                value="depth" />
+  <arg name="depth_registered_pub" value="depth_registered" />
+  <arg name="depth_registered"     value="depth_registered" />
+
+  <!-- Disable bond topics by default -->
+  <arg name="bond"    value="false" />
+  <arg name="respawn" value="$(arg bond)" />
+
+  <group ns="d435">
+    <!-- Realsense D435 nodelets -->
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)"
+          args="manager" output="screen"/>
+    <node pkg="nodelet" type="nodelet" name="realsense2_camera"
+          args="load realsense2_camera/RealSenseNodeFactory $(arg manager)">
+
+      <rosparam command="load" file="$(find ca_camera)/config/d435.yaml"/>
+
+      <param name="base_frame_id"          value="$(arg ns)/d435_link"/>
+      <param name="depth_frame_id"         value="$(arg ns)/d435_depth_frame"/>
+      <param name="color_frame_id"         value="$(arg ns)/d435_color_frame"/>
+      <param name="depth_optical_frame_id" value="$(arg ns)/d435_depth_optical_frame"/>
+      <param name="color_optical_frame_id" value="$(arg ns)/d435_color_optical_frame"/>
+
+      <remap from="color/image_raw"   to="$(arg rgb)/image_raw" />
+      <remap from="color/camera_info" to="$(arg rgb)/camera_info" />
+    </node>
+
+    <!-- Color rectified image -->
+    <node pkg="nodelet" type="nodelet" name="$(arg rgb)_rectify_color"
+          args="load image_proc/rectify $(arg manager) $(arg bond)"
+          respawn="$(arg respawn)">
+      <remap from="image_mono"  to="$(arg rgb)/image_raw" />
+      <remap from="camera_info" to="$(arg rgb)/camera_info" />
+      <remap from="image_rect"  to="$(arg rgb)/image_rect_color" />
+    </node>
+
+    <!-- Depth image registration -->
+    <node pkg="nodelet" type="nodelet" name="register_depth"
+          args="load depth_image_proc/register $(arg manager) $(arg bond)" respawn="$(arg respawn)">
+      <remap from="rgb/camera_info"             to="$(arg rgb)/camera_info" />
+      <remap from="depth/camera_info"           to="$(arg depth)/camera_info" />
+      <remap from="depth/image_rect"            to="$(arg depth)/image_rect_raw" />
+      <remap from="depth_registered/image_rect" to="$(arg depth_registered)/image_raw" />
+    </node>
+
+    <!-- Publish registered XYZRGB point cloud with software registered input -->
+    <node pkg="nodelet" type="nodelet" name="points_xyzrgb_sw_registered"
+          args="load depth_image_proc/point_cloud_xyzrgb $(arg manager) $(arg bond)" respawn="$(arg respawn)">
+      <remap from="rgb/image_rect_color"        to="$(arg rgb)/image_rect_color" />
+      <remap from="rgb/camera_info"             to="$(arg rgb)/camera_info" />
+      <remap from="depth_registered/image_rect" to="$(arg depth_registered)/image_raw" />
+      <remap from="depth_registered/points"     to="$(arg depth_registered)/points" />
+    </node>
+
+  </group>
+</launch>

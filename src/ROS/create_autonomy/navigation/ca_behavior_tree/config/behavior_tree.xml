@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <ReactiveSequence name="Autonomy Sequence">
+                <Condition ID="IsBatteryLevelOK" name="Low Level Battery Check" topic="/create1/battery/voltage" warning_voltage="4"/>
+                <KeepRunningUntilFailure>
+                    <Sequence name="Waypoint Sequence">
+                        <Action ID="MoveBase" goal="-6.432;3.35;0.0" name="Waypoint 1" robot="create1"/>
+                        <Action ID="MoveBase" goal="6.5;-1.0;0.0" name="Waypoint 2" robot="create1"/>
+                        <Action ID="MoveBase" goal="1.0;3.0;-1.5708" name="Waypoint 3" robot="create1"/>
+                    </Sequence>
+                </KeepRunningUntilFailure>
+            </ReactiveSequence>
+            <Action ID="MoveBase" goal="1.0;-2.0;0.0" name="MoveToChargeStation" robot="create1"/>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Condition ID="IsBatteryLevelOK">
+            <input_port name="topic">Battery voltage topic</input_port>
+            <input_port default="0.105" name="warning_voltage">Warning voltage level</input_port>
+        </Condition>
+        <Action ID="ManualMode">
+            <input_port default="False" name="is_autonomy"/>
+        </Action>
+        <Action ID="MoveBase">
+            <input_port default="0.0;0.0;0.0" name="goal">Goal pose</input_port>
+            <input_port default="create" name="robot">Robot Name</input_port>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>
+

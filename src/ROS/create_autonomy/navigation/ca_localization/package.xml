@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ca_localization</name>
+  <version>0.0.0</version>
+  <description>Contains localization tools</description>
+
+  <maintainer email="emiliano.borghi@gmail.com">Emiliano Borghi</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+</package>

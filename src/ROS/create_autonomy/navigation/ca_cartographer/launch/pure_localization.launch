@@ -1,0 +1,24 @@
+<launch>
+  <arg name="ns"    default="create1"                 doc="Namespace of the robot"/>
+  <arg name="laser" default="$(optenv LASER rplidar)" doc="Laser for mapping the environment"/>
+
+  <arg name="env" doc="Name of the environment that is used to load the pbstream map"/>
+  <arg name="load_state_filename" value="$(find ca_cartographer)/pbstream/$(arg env).pbstream"/>
+
+  <node name="cartographer_node" pkg="cartographer_ros" type="cartographer_node"
+        args="-configuration_directory $(find ca_cartographer)/config
+              -configuration_basename localization_2d.lua
+              -load_state_filename $(arg load_state_filename)">
+    <!-- ID needs to be set through environment variable to allow lua script to read it -->
+    <env name="ns" value="$(arg ns)" />
+
+    <remap from="scan" to="$(arg laser)/scan" />
+    <remap from="imu"  to="imu/data" />
+    <remap from="odom" to="odom_combined" />
+  </node>
+
+  <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+      type="cartographer_occupancy_grid_node" args="-resolution 0.05">
+    <remap from="map" to="/map" />
+  </node>
+</launch>

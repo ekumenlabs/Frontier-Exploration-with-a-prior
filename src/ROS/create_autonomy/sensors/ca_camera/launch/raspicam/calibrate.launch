@@ -1,0 +1,14 @@
+<launch>
+    <!-- Remap the raspicam frames -->
+    <include file="$(find ca_camera)/launch/cam_mapping.launch"/>
+
+    <arg name="cam_name" value="raspicam"/>
+    <arg name="cam_topic" value="/$(arg cam_name)/image_raw"/>
+
+    <arg name="chessboard_x" value="8"/>
+    <arg name="chessboard_y" value="6"/>
+    <arg name="square_size_m" value="0.024"/>
+
+    <node pkg="camera_calibration" type="cameracalibrator.py" name="$(arg cam_name)_calibration" output="screen" ns="create1"
+        args="--size $(arg chessboard_x)x$(arg chessboard_y) --square $(arg square_size_m) image:=$(arg cam_topic)"/>
+</launch>

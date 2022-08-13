@@ -8,3 +8,4 @@ numpy
 dataclasses
 tqdm
 notebook
+pcg-gazebo

@@ -1,0 +1,21 @@
+# global planner
+# The name of the plugin for the global planner to use with move_base.
+# This plugin must adhere to the nav_core::BaseGlobalPlanner interface
+# specified in the nav_core package.
+#
+# http://wiki.ros.org/nav_core#BaseGlobalPlanner
+
+# Move base
+base_global_planner: "SBPLLatticePlanner"
+
+# Move base flex
+controllers:
+  - name: 'SBPLLatticePlanner'
+    type: 'SBPLLatticePlanner'
+
+SBPLLatticePlanner:
+  environment_type: XYThetaLattice
+  planner_type: "ARAPlanner"
+  allocated_time: 5.0
+  initial_epsilon: 3.0
+  forward_search: false

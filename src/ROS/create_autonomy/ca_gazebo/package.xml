@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ca_gazebo</name>
+  <version>0.0.1</version>
+  <description>Simulation plugins to simulate the robot</description>
+
+  <maintainer email="eborghiorue@frba.utn.edu.ar">Emiliano Borghi</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ca_msgs</depend>
+  <depend>gazebo</depend>
+  <depend>gazebo_plugins</depend>
+  <depend>message_generation</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+  <depend>tf2_ros</depend>
+
+  <exec_depend>ca_control</exec_depend>
+  <exec_depend>ca_description</exec_depend>
+  <exec_depend>ca_localization</exec_depend>
+  <exec_depend>ca_move_base</exec_depend>
+  <exec_depend>ca_node</exec_depend>
+  <exec_depend>ca_slam</exec_depend>
+  <exec_depend>ca_swarm</exec_depend>
+  <exec_depend>ca_tools</exec_depend>
+  <exec_depend>create_gazebo_models</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <test_depend>roslaunch</test_depend>
+  <test_depend>roslint</test_depend>
+  <test_depend>rostest</test_depend>
+
+</package>

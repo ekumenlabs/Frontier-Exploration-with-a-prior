@@ -1,0 +1,8 @@
+<launch>
+  <arg name="ns" default="unit_box" />
+	<!-- move_base -->
+	<include file="$(find ca_swarm)/launch/move_base.launch">
+    <arg name="ns" value="$(arg ns)" />
+  </include>
+  <node pkg="ca_swarm" type="box_client.py" name="box_server_client" output="screen"/>
+</launch>
