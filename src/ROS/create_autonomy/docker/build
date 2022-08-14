@@ -22,7 +22,7 @@ def main():
             else f"create_ros_{args.ros_version}_gazebo{args.gazebo_version}"
 
     # Build selected image
-    path_to_docker = os.path.join(ut.get_repo_root(), 'docker')
+    path_to_docker = os.path.join(ut.get_repo_root(), 'src/ROS/create_autonomy/docker')
     command = f"cd {path_to_docker} && make {image_name}"
     ut.run_command(command)
 

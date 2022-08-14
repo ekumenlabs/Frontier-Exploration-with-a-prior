@@ -50,11 +50,13 @@ RUN rm -r ${JPS3D_WS}
 ENV DEPS_WS=/deps_ws
 RUN mkdir -p ${DEPS_WS}/src
 WORKDIR ${DEPS_WS}/src
+RUN apt-get update && apt-get install -y python-catkin-tools python3-vcstool python3.8 python3.8-dev python3.8-distutils
 RUN apt-get install -y python-catkin-tools python3-vcstool
+RUN alias python=python3.8
+RUN wget https://bootstrap.pypa.io/get-pip.py
 COPY dependencies.repos ${DEPS_WS}/src/dependencies.repos
 RUN vcs import . < dependencies.repos
 WORKDIR ${DEPS_WS}
-RUN apt-get update
 USER ${USER}
 RUN rosdep install --from-paths src --rosdistro=${ROS1_DISTRO} -yi -r --os=ubuntu:bionic
 USER root
