@@ -71,5 +71,6 @@ COPY ${DEPS_FILE} ${DEPS_FILE}
 RUN apt-get update && \
     xargs -a ${DEPS_FILE} apt-get install -y
 RUN rm ${DEPS_FILE}
+RUN python3.8 -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Exploration-with-a-prior.git@master 
 
 USER $USER

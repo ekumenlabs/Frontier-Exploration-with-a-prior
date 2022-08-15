@@ -61,6 +61,8 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append("-e ROS_HOSTNAME=localhost")
     docker_args.append("-e ROS_MASTER_URI=http://localhost:11311")
     docker_args.append(f"--workdir /{WS_NAME}/")
+    # run dettached
+    docker_args.append(f"-d")
 
     if ut.is_nvidia():
         docker_args.append("--gpus all")
