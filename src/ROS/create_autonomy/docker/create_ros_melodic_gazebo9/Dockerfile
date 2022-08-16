@@ -72,5 +72,7 @@ RUN apt-get update && \
     xargs -a ${DEPS_FILE} apt-get install -y
 RUN rm ${DEPS_FILE}
 RUN python3.8 -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Exploration-with-a-prior.git@master 
+RUN apt-get install python3-catkin-pkg-modules -y
+RUN apt-get install python3-rospkg-modules -y
 
 USER $USER

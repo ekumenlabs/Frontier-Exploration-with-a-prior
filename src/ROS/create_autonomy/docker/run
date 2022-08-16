@@ -35,7 +35,7 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     # Keep user settings
     docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
     # Mount workspace
-    docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}:/{WS_NAME}/src")
+    docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}/Frontier-Exploration-with-a-prior/src/ROS/create_autonomy:/{WS_NAME}/src")
     docker_args.append(f"--volume {temp_volume}/ws/build/:/{WS_NAME}/build/")
     docker_args.append(f"--volume {temp_volume}/ws/devel/:/{WS_NAME}/devel/")
     # VSCode needs HOME to be defined in order to work in the container
