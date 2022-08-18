@@ -36,7 +36,7 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append(f"--volume $HOME/.gazebo/:{docker_home}/.gazebo/")
     # docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
     # Mount workspace
-    docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}:/{WS_NAME}/src")
+    docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}/Frontier-Exploration-with-a-prior/src/ROS/create_autonomy:/{WS_NAME}/src")
     docker_args.append(f"--volume {temp_volume}/ws/build/:/{WS_NAME}/build/")
     docker_args.append(f"--volume {temp_volume}/ws/devel/:/{WS_NAME}/devel/")
     # VSCode needs HOME to be defined in order to work in the container
@@ -62,6 +62,8 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append("-e ROS_HOSTNAME=localhost")
     docker_args.append("-e ROS_MASTER_URI=http://localhost:11311")
     docker_args.append(f"--workdir /{WS_NAME}/")
+    # run dettached
+    docker_args.append(f"-d")
 
     if ut.is_nvidia():
         docker_args.append("--gpus all")
