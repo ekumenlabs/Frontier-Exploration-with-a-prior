@@ -33,7 +33,8 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append("--network host")
     docker_args.append(f"--user {UID}:{UID}")
     # Keep user settings
-    docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
+    docker_args.append(f"--volume $HOME/.gazebo/:{docker_home}/.gazebo/")
+    # docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
     # Mount workspace
     docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}:/{WS_NAME}/src")
     docker_args.append(f"--volume {temp_volume}/ws/build/:/{WS_NAME}/build/")
