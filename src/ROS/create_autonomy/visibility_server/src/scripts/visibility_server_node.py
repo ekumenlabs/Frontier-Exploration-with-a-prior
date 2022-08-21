@@ -2,6 +2,7 @@
 from typing import Tuple
 import FrontierExploration.preprocessing.grid.occupancy_grid as grid
 from FrontierExploration.preprocessing.grid.mock_grid import create_mock_grid
+from FrontierExploration.preprocessing.plotting.live_plot_utils import LivePlotter
 from visibility_server.srv import Visibility, VisibilityRequest, VisibilityResponse
 
 import rospy
@@ -17,12 +18,14 @@ class InitialState:
 
 
 class VisibilityServer(object):
-    """Consumvisibility_serveres time elapsed and robot odometry to estimate battery consumption
+    """
+    Exposes a service that returns the visibility of a cell in map frame. 
     """
     def __init__(self, grid: grid.OccupancyGrid, initial_state: InitialState):
         self._grid = grid
         self._inital_state = initial_state
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
+        self._plotter = LivePlotter(grid)
     
     
     def _visibility_cb(self, req: VisibilityRequest) -> VisibilityResponse:
@@ -44,7 +47,7 @@ class VisibilityServer(object):
         """
         Main entrypoint for the mocker.
         """
-        pass
+        self._plotter.run()
         while not rospy.is_shutdown():
             rospy.sleep(1)
 
