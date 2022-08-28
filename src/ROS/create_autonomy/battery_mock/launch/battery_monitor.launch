@@ -1,0 +1,9 @@
+<launch>
+  <node pkg="battery_mock" type="battery_mock_node.py" name="batery_mock" output="screen">
+    <param name="/use_sim_time" value="true"/>
+  </node>
+  <node pkg="battery_mock" type="battery_monitor_node.py" name="battery_monitor" output="screen">
+  <param name="/use_sim_time" value="true"/>
+  </node>
+
+</launch>

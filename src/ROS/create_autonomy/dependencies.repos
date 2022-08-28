@@ -1,0 +1,57 @@
+repositories:
+  create_gazebo_models:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/create_gazebo_models.git
+    version: master
+  cob_extern:
+    type: git
+    url: https://github.com/ipa320/cob_extern.git
+    version: indigo_dev
+  cob_perception_common:
+    type: git
+    url: https://github.com/ipa320/cob_perception_common.git
+    version: indigo_dev
+  explore_lite:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/m-explore.git
+    version: master
+  gscam:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/gscam.git
+    version: master
+  hector_slam:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/hector_slam.git
+    version: melodic-devel
+  i2c_imu:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/i2c_imu.git
+    version: master
+  ipa_room_segmentation:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/ipa_coverage_planning.git
+    version: melodic_dev
+  jps_global_planner:
+    type: git
+    url: https://github.com/eborghi10/jps_global_planner.git
+    version: master
+  libcreate:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/libcreate.git
+    version: master
+  octomap_mapping:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/octomap_mapping.git
+    version: kinetic-devel
+  rqt_robomate_ui:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/rqt_robomate_ui.git
+    version: master
+  ros_astra_camera:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/ros_astra_camera.git
+    version: master
+  viso2:
+    type: git
+    url: https://github.com/RoboticaUtnFrba/viso2.git
+    version: kinetic

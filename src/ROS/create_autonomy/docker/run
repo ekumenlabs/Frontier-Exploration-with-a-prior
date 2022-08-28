@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+
+"""
+Author:     Diego Maldonado (@dmnunez1993)
+Maintainer: Emiliano Borghi (@eborghi10)
+"""
+
+import argparse
+import subprocess
+import docker_utils as ut
+import os
+
+IMAGE_NAME = "robotica_utn_frba"
+WS_NAME    = "create_ws"
+UID        = ut.get_uid()
+
+
+def run_dev_environment(command, ros="melodic", gazebo="9"):
+    user_docker = "create"
+    docker_home = f"/home/{user_docker}"
+    dockerfile  = f"create_ros_{ros}_gazebo{gazebo}"
+    temp_volume = f"$HOME/.{IMAGE_NAME}"
+
+    docker_args = []
+    docker_args.append("-it")
+    docker_args.append("--rm")
+    docker_args.append("--env DISPLAY")
+    docker_args.append("--volume /tmp/.X11-unix:/tmp/.X11-unix:rw")
+    docker_args.append(f"--volume $HOME/.Xauthority:{docker_home}/.Xauthority:rw")
+    docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
+    docker_args.append(f"--name {IMAGE_NAME}")
+    docker_args.append("--privileged")
+    docker_args.append("--network host")
+    docker_args.append(f"--user {UID}:{UID}")
+    # Keep user settings
+    docker_args.append(f"--volume $HOME/.gazebo/:{docker_home}/.gazebo/")
+    # docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
+    # Mount workspace
+    docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}/Frontier-Exploration-with-a-prior/src/ROS/create_autonomy:/{WS_NAME}/src")
+    docker_args.append(f"--volume {temp_volume}/ws/build/:/{WS_NAME}/build/")
+    docker_args.append(f"--volume {temp_volume}/ws/devel/:/{WS_NAME}/devel/")
+    # VSCode needs HOME to be defined in order to work in the container
+    docker_args.append(f"-e HOME={docker_home}")
+
+    # USB devices for the real robot
+    docker_args.append(ut.mount_resource("/dev/roomba"))
+    docker_args.append(ut.mount_resource("/dev/rplidar"))
+    docker_args.append(ut.mount_resource("/dev/video0"))
+    docker_args.append(ut.mount_resource("/dev/video1"))
+    docker_args.append(ut.mount_resource("/dev/video2"))
+    docker_args.append(ut.mount_resource("/dev/video3"))
+    docker_args.append(ut.mount_resource("/dev/video4"))
+    docker_args.append(ut.mount_resource("/dev/video5"))
+    docker_args.append(ut.mount_resource("/dev/video6"))
+    docker_args.append(ut.mount_resource("/dev/video7"))
+    docker_args.append(ut.mount_resource("/dev/video8"))
+    docker_args.append(ut.mount_resource("/dev/video9"))
+
+    # To allow installing packages
+    docker_args.append("--group-add=sudo")
+
+    docker_args.append("-e ROS_HOSTNAME=localhost")
+    docker_args.append("-e ROS_MASTER_URI=http://localhost:11311")
+    docker_args.append(f"--workdir /{WS_NAME}/")
+    # run dettached
+    docker_args.append(f"-d")
+
+    if ut.is_nvidia():
+        docker_args.append("--gpus all")
+        dockerfile = f"create_{ros}_nvidia"
+
+    # Join arguments together separated by a space
+    docker_args = ' '.join(docker_args)
+    docker_command = f"docker run {docker_args} {dockerfile} {command}"
+
+    ut.create_directory(f"{temp_volume}/.gazebo/")
+    ut.create_directory(f"{temp_volume}/ws/build/")
+    ut.create_directory(f"{temp_volume}/ws/devel/")
+
+    ut.run_command("xhost +local:root")
+    ut.run_command(docker_command)
+    ut.run_command("xhost -local:root")
+
+
+def attach_dev_environment(command):
+    command = f"docker exec -it --user {UID}:{UID} {IMAGE_NAME} {command}"
+    ut.run_command(command)
+
+
+def is_running():
+    command = f"docker ps | grep {IMAGE_NAME} > /dev/null"
+    try:
+        subprocess.check_call(command, shell=True)
+    except Exception:
+        return False
+
+    return True
+
+
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--cmd', dest='command', default='bash')
+    parser.add_argument('-g', '--gazebo', dest="gazebo_version", default="9")
+    parser.add_argument('-r', '--ros', dest="ros_version", default="melodic")
+    args = parser.parse_args()
+
+    if not is_running():
+        run_dev_environment(args.command, ros=args.ros_version, gazebo=args.gazebo_version)
+    else:
+        attach_dev_environment(args.command)
+
+
+if __name__ == '__main__':
+    main()

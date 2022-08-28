@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ca_swarm</name>
+  <version>0.0.0</version>
+  <description>Scripts to control multiple robots</description>
+
+  <maintainer email="emiliano.borghi@gmail.com">Emiliano Borghi</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>actionlib</depend>
+  <depend>amcl</depend>
+  <depend>ca_move_base</depend>
+  <depend>geometry_msgs</depend>
+  <depend>move_base</depend>
+  <depend>move_base_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>tf</depend>
+  <depend>tf2_ros</depend>
+
+  <exec_depend>dwa_local_planner</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>rospy</exec_depend>
+
+  <test_depend>roslint</test_depend>
+
+  <export>
+  </export>
+</package>

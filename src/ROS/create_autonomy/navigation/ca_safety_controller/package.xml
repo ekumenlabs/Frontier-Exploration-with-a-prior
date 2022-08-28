@@ -1,0 +1,38 @@
+<package format="2">
+  <name>ca_safety_controller</name>
+  <version>0.6.7</version>
+  <description>
+    A controller ensuring the safe operation of iRobot Create.
+
+    The SafetyController keeps track of bumper, cliff and wheel drop events. In case of the first two,
+    Create is commanded to move back. In the latter case, Create is stopped.
+
+    This controller can be enabled/disabled.
+    The safety states (bumper pressed etc.) can be reset. WARNING: Dangerous!
+  </description>
+  <author email="marcus.liebhardt@yujinrobot.com">Marcus Liebhardt</author>
+  <maintainer email="marcus.liebhardt@yujinrobot.com">Marcus Liebhardt</maintainer>
+  <license>BSD</license>
+  <url type="bugtracker">https://github.com/yujinrobot/kobuki/issues</url>
+  <url type="repository">https://github.com/yujinrobot/kobuki</url>
+  <url type="website">http://ros.org/wiki/kobuki_safety_controller</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>ca_msgs</depend>
+  <depend>ecl_threads</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nodelet</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>yocs_controllers</depend>
+
+  <exec_depend>yocs_velocity_smoother</exec_depend>
+
+  <test_depend>roslint</test_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/plugins/nodelet_plugins.xml"/>
+  </export>
+</package>

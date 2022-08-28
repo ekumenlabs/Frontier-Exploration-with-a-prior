@@ -1,0 +1,35 @@
+<launch>
+  <arg name="ns" default="create1" doc="Namespace of the robot"/>
+
+  <arg name="use_nodelets"    default="$(optenv NODELET true)" doc="Use nodelets: http://wiki.ros.org/nodelet" />
+  <arg name="nodelet_manager" value="nodelet_manager" />
+
+  <node unless="$(arg use_nodelets)"
+        pkg="robot_localization" type="ekf_localization_node"
+        name="ekf_se" clear_params="true" output="screen">
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_localization.yaml"/>
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_odom.yaml"/>
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_imu.yaml"/>
+
+    <param name="odom_frame"      value="$(arg ns)/odom"/>
+    <param name="base_link_frame" value="$(arg ns)/base_footprint"/>
+    <param name="world_frame"     value="$(arg ns)/odom"/>
+
+    <remap from="odometry/filtered" to="odom_combined"/>
+  </node>
+
+  <node if="$(arg use_nodelets)"
+        pkg="nodelet" type="nodelet" name="ekf_se" output="screen"
+        args="load RobotLocalization/EkfNodelet $(arg nodelet_manager)">
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_localization.yaml"/>
+
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_odom.yaml"/>
+    <rosparam command="load" file="$(find ca_localization)/config/ekf_imu.yaml"/>
+
+    <param name="odom_frame"      value="$(arg ns)/odom"/>
+    <param name="base_link_frame" value="$(arg ns)/base_footprint"/>
+    <param name="world_frame"     value="$(arg ns)/odom"/>
+
+    <remap from="odometry/filtered" to="odom_combined"/>
+  </node>
+</launch>

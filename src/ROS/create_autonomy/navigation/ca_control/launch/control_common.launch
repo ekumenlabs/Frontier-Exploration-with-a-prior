@@ -1,0 +1,22 @@
+<launch>
+  <arg name="ns" default="create1" doc="Namespace of the robot"/>
+
+  <!-- Load controller configuration from YAML file to parameter server -->
+  <rosparam file="$(find ca_control)/config/create_2_control.yaml" command="load"/>
+
+  <!-- need to be set separatedly, since they depend on the robot id, and that cannot be parametrized
+  in the yaml file.-->
+  <param name="mobile_base_controller/odom_frame_id" value="$(arg ns)/odom"/>
+  <param name="mobile_base_controller/base_frame_id" value="$(arg ns)/base_footprint"/>
+
+  <!-- load the controller -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" args="mobile_base_controller">
+  </node>
+  <!-- Republisher since remap doesn't work with controller spawner -->
+  <node name="ros_control_odom_remapper" pkg="topic_tools" type="relay"
+    args="mobile_base_controller/odom odom" />
+  <node name="ros_control_cmd_vel_remapper" pkg="topic_tools" type="relay"
+    args="cmd_vel/out mobile_base_controller/cmd_vel" />
+
+</launch>

@@ -1,17 +1,79 @@
-from typing import List, Optional
+from tqdm import tqdm
+from typing import List, Optional, Tuple
 import ezdxf
 import geopandas as gpd
 import pandas as pd
 import numpy as np
+from pcg_gazebo.simulation import SimulationModel, \
+    add_custom_gazebo_resource_path
+from pcg_gazebo.generators.creators import extrude
+from pcg_gazebo.generators.shapes import random_rectangles, \
+    random_rectangle, rectangle
+from pcg_gazebo.generators import WorldGenerator
+from shapely.geometry import Polygon, box as Box
 
 from FrontierExploration.preprocessing.layout.polygons import Square
 from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
 
+class LayoutReader: 
+    def __init__(self, file_name: str, file_extension: str,files_dir: str):
+        self.files_dir = files_dir
+        self.file_name = file_name
+        self.file_extension = file_extension
+        self.world_generator = WorldGenerator()
+        self.layout = gpd.read_file(f"{files_dir}{file_name}.{file_extension}")
+    
+    def create_gazebo_model(
+        self,
+        output_file_dir: str,
+        position_phase: Tuple[int, int] = (0, 0),
+        wall_thickness: float = 0.1,
+        wall_height: float = 10,
+        show: bool = True
+    ):
+        # Create the wall model based on the extruded
+        # boundaries of the polygon
+        self.world_generator.world.name = self.file_name + '.world'
+        walls_model_list = []
+        counter = 0
+        for polygon in tqdm(self.layout.unary_union.geoms):  
+            box = Box(*polygon.bounds)
+            model = extrude(
+                polygon=polygon,
+                thickness=wall_thickness,
+                height=wall_height,
+                pose=[box.centroid.x-position_phase[0], box.centroid.y-position_phase[1], wall_height / 2., 0, 0, 0],
+                extrude_boundaries=False,
+                color='xkcd')
+            counter += 1
+            model.name = self.file_name + str(counter) + '_wall'
+            self.world_generator.world.add_model(
+            tag=model.name,
+            model=model)
+        if show:
+            self.world_generator.world.show()
+        return self._export_world(output_file_dir)
+    
+    def _export_world(self, export_dir: str, create_path: bool = True) -> str:
+        export_models_dir = f"{export_dir}/models"
+        export_world_dir = f"{export_dir}/worlds"
+        if create_path:
+            add_custom_gazebo_resource_path(export_models_dir)
+        full_world_filename = self.world_generator.export_world(
+            output_dir=export_world_dir,
+            filename=self.world_generator.world.name,
+            models_output_dir=export_models_dir,
+            with_default_sun=False,
+            overwrite=True)
+        return full_world_filename
 
-class LayoutReader:
-    @staticmethod
-    def clean_and_save(file_dir: str, output_file_dir: str, layers: List[str], entity_types: Optional[List[str]]=["*"]):
-      msp = ezdxf.readfile(file_dir).modelspace()
+    def _add_ground_plane(self):
+        self.world_generator.world.add_model(
+            tag='ground_plane',
+            model=SimulationModel.from_gazebo_model('ground_plane'))
+
+    def create_clean_dxf(self, output_file_dir: str, layers: List[str], entity_types: Optional[List[str]]=["*"]):
+      msp = ezdxf.readfile(f"{self.files_dir}{self.file_name}.{self.file_extension}").modelspace()
       clean_doc = ezdxf.new('R2010')
       clean_msp = clean_doc.modelspace()
 

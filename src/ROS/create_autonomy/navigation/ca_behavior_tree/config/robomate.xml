@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<root main_tree_to_execute="BehaviorTree">
+    <!-- ////////// -->
+    <BehaviorTree ID="BehaviorTree">
+        <Fallback>
+            <KeepRunningUntilFailure>
+                <Sequence name="Waypoint Sequence">
+                    <Action ID="MoveBase" goal="-5.5;5.0;1.57" name="Waypoint 2" robot="create1"/>
+                    <RetryUntilSuccesful num_attempts="100">
+                        <Fallback>
+                            <Action ID="GetLocation" NextLocation="NextLoc" name="GetLocation 1"/>
+                            <Delay delay_msec="1000">
+                                <AlwaysFailure/>
+                            </Delay>
+                        </Fallback>
+                    </RetryUntilSuccesful>
+                    <Action ID="MoveBase" goal="{NextLoc}" name="Waypoint 1" robot="create1"/>
+                    <RetryUntilSuccesful num_attempts="30">
+                        <Delay delay_msec="1000">
+                            <Condition ID="MateWasReturned"/>
+                        </Delay>
+                    </RetryUntilSuccesful>
+                </Sequence>
+            </KeepRunningUntilFailure>
+            <Condition ID="IsBatteryLevelOK" name="Low Level Battery Check" topic="/create1/battery/voltage" warning_voltage="4"/>
+            <Action ID="MoveBase" goal="0.0;2.0;0.0" name="MoveToChargeStation" robot="create1"/>
+        </Fallback>
+    </BehaviorTree>
+    <!-- ////////// -->
+    <TreeNodesModel>
+        <Action ID="GetLocation">
+            <output_port name="NextLocation" type="Pose2D"/>
+        </Action>
+        <Condition ID="IsBatteryLevelOK">
+            <input_port name="topic" type="std::string"/>
+            <input_port name="warning_voltage" type="double"/>
+        </Condition>
+        <Condition ID="MateWasReturned"/>
+        <Action ID="MoveBase">
+            <input_port name="goal" type="Pose2D"/>
+            <input_port name="robot" type="std::string"/>
+        </Action>
+    </TreeNodesModel>
+    <!-- ////////// -->
+</root>

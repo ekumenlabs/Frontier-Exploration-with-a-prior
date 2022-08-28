@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+<xacro:macro name="wheel" params="name:=wheel parent:=base_footprint radius width *origin">
+
+  <xacro:include filename="$(find ca_description)/urdf/utils/inertias.xacro"/>
+
+  <xacro:property name="parent_link" value="${parent}"/>
+  <xacro:property name="link_name"   value="${name}_link"/>
+
+  <xacro:property name="mass"        value="0.5"/>
+
+  <joint name="${name}_joint" type="continuous">
+    <xacro:insert_block name="origin"/>
+    <parent link="${parent_link}"/>
+    <child link="${link_name}"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="${link_name}">
+    <xacro:inertial_cylinder mass="${mass}" radius="${radius}" length="${width}"/>
+
+    <visual>
+      <geometry>
+        <cylinder radius="${radius}" length="${width}" />
+      </geometry>
+      <material name="lynch"/>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder radius="${radius}" length="${width}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="${link_name}">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+</xacro:macro>
+
+</robot>

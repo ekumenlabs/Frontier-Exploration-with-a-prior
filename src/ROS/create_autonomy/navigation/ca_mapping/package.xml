@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ca_mapping</name>
+  <version>0.0.0</version>
+  <description>Mapping package for the iRobot Create 2</description>
+
+  <maintainer email="eborghiorue@frba.utn.edu.ar">Emiliano Borghi</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>map_server</exec_depend>
+</package>

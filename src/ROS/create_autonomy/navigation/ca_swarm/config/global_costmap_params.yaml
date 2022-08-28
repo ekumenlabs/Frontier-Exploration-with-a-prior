@@ -1,0 +1,9 @@
+global_costmap:
+  global_frame: map
+
+  plugins:
+    - {name: static_layer, type: "costmap_2d::StaticLayer" }
+    - {name: inflation_layer,  type: "costmap_2d::InflationLayer" }
+
+  update_frequency: 5.0
+  publish_frequency: 1.0

@@ -1,0 +1,123 @@
+<launch>
+  <arg name="ns"    default="create1"                 doc="Namespace of the robot"/>
+  <arg name="laser" default="$(optenv LASER rplidar)" doc="Laser for mapping the environment"/>
+
+  <arg name="localization" default="" doc="Autonomous method for localization/navigation."/>
+  <arg name="navigation"   value="$(optenv NAVIGATION move_base)" doc="Navigation framework to use"/>
+  <arg name="env"          default="empty"/>
+
+  <!-- Bumper to point cloud -->
+	<include file="$(find ca_bumper2pc)/launch/standalone.launch"/>
+
+  <!--
+    #######################
+          NAVIGATION
+    #######################
+    -->
+
+  <!-- move_base -->
+  <include if="$(eval arg('navigation')=='move_base')"
+           file="$(find ca_move_base)/launch/move_base.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!-- move_base flex -->
+  <include if="$(eval arg('navigation')=='mbf')"
+           file="$(find ca_move_base)/launch/move_base_flex.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!--
+    #######################
+          LOCALIZATION
+    #######################
+    -->
+
+  <!-- map_server for localization -->
+  <include if="$(eval arg('localization')=='amcl' or arg('localization')=='lama')"
+           file="$(find ca_mapping)/launch/map_server.launch">
+    <arg name="env" value="$(arg env)"/>
+  </include>
+
+	<!-- AMCL -->
+  <include if="$(eval arg('localization')=='amcl')"
+           file="$(find ca_move_base)/launch/amcl.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!-- Cartographer Stack -->
+  <!-- Pure Localization -->
+  <include if="$(eval arg('localization')=='pure_localization')"
+           file="$(find ca_cartographer)/launch/pure_localization.launch">
+    <arg name="env" value="$(arg env)"/>
+    <arg name="ns"  value="$(arg ns)"/>
+  </include>
+
+  <!-- LAMA -->
+  <include if="$(eval arg('localization')=='lama')"
+           file="$(find ca_move_base)/launch/lama.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!-- RTAB-Map -->
+  <include if="$(eval arg('localization')=='rtab_localization')"
+           file="$(find ca_slam)/launch/rtab.launch">
+    <arg name="ns"            value="$(arg ns)"/>
+    <arg name="rtabmapviz"    value="false"/>
+    <arg name="localization"  value="true"/>
+  </include>
+
+  <!-- Visual odometry -->
+	<include if="$(eval arg('localization')=='visual_odometry')"
+           file="$(find ca_visual_odometry)/launch/vo_raspicam.launch">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!--
+    #######################
+            MAPPING
+    #######################
+    -->
+
+  <!-- Cartographer Mapping -->
+  <include if="$(eval arg('localization')=='cartographer')"
+           file="$(find ca_cartographer)/launch/mapping_cartographer.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!-- slam_gmapping -->
+  <include if="$(eval arg('localization')=='slam')"
+           file="$(find ca_slam)/launch/slam_gmapping.launch">
+    <arg name="ns"    value="$(arg ns)"/>
+    <arg name="laser" value="$(arg laser)"/>
+  </include>
+
+  <!-- Octomap mapping -->
+  <include if="$(eval arg('localization')=='octomap')"
+           file="$(find ca_move_base)/launch/octomap_mapping.launch"/>
+
+  <!-- Hector SLAM -->
+  <include if="$(eval arg('localization')=='hector_mapping')"
+           file="$(find ca_hector)/launch/default_mapping.launch">
+  </include>
+
+  <!-- Hector SLAM + geotiff -->
+  <include if="$(eval arg('localization')=='hector_geotiff')"
+           file="$(find ca_hector)/launch/geotiff_mapping.launch">
+    <arg name="env" value="$(arg env)"/>
+  </include>
+
+  <!-- RTAB-Map -->
+  <include if="$(eval arg('localization')=='rtab')"
+           file="$(find ca_slam)/launch/rtab.launch">
+    <arg name="ns"            value="$(arg ns)"/>
+    <arg name="rtabmapviz"    value="false"/>
+    <arg name="localization"  value="false"/>
+  </include>
+
+</launch>

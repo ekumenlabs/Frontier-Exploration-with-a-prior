@@ -1,0 +1,16 @@
+<launch>
+  <arg name="ns"    default="create1"                 doc="Namespace of the robot"/>
+  <arg name="laser" default="$(optenv LASER rplidar)" doc="Laser for mapping the environment"/>
+
+  <node pkg="amcl" type="amcl" name="amcl">
+    <rosparam file="$(find ca_move_base)/config/amcl_params.yaml" command="load"/>
+    <!-- We want a single map for multi-robots -->
+    <remap from="map"        to="/map" />
+    <remap from="static_map" to="/static_map"/>
+    <remap from="scan"       to="$(arg laser)/scan"/>
+
+    <param name="odom_frame_id" value="$(arg ns)/odom"/>
+    <param name="base_frame_id" value="$(arg ns)/base_footprint"/>
+  </node>
+
+</launch>

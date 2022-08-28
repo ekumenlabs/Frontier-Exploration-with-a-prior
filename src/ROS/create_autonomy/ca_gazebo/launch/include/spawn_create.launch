@@ -1,0 +1,69 @@
+<launch>
+  <arg name="ns" default="create1" doc="Namespace of the robot"/>
+
+  <arg name="env"    default="empty" doc="Name of the environment"/>
+  <arg name="pose_x" default="0"     doc="Pose X"/>
+  <arg name="pose_y" default="0"     doc="Pose Y"/>
+  <arg name="pose_Y" default="0"     doc="Pose Yaw"/>
+
+  <arg name="high_battery_consumption" default="$(optenv HIGH_BATTERY_CONSUMPTION false)" doc="Start discharging the battery at 4 A"/>
+
+  <arg name="enable_ros_control" value="$(optenv ROS_CONTROL false)" doc="Enable ros_control"/>
+  <arg name="use_nodelets" default="$(optenv NODELET true)"
+       doc="Use nodelets: http://wiki.ros.org/nodelet" />
+  <arg name="localization" default="$(optenv LOCALIZATION none)"
+       doc="Localization type. More options here: https://github.com/RoboticaUtnFrba/create_autonomy/wiki/Launching-options"/>
+
+  <!-- Create 2 description -->
+  <include file="$(find ca_description)/launch/create_description.launch">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!-- Spawn URDF into Gazebo -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
+        args="-param robot_description -urdf -model $(arg ns)
+              -x $(arg pose_x) -y $(arg pose_y) -z 0 -Y $(arg pose_Y)"/>
+
+  <!-- Running Gazebo (non-nodelet) version of depthimage_to_laserscan for 3D cameras -->
+  <include file="$(find ca_slam)/launch/depthimage_to_laserscan_gazebo.launch">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!-- ros_control -->
+  <include file="$(find ca_control)/launch/control_common.launch" if="$(arg enable_ros_control)">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!-- Nodelet manager -->
+  <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" if="$(arg use_nodelets)"/>
+
+  <!-- Safety controller -->
+  <include file="$(find ca_safety_controller)/launch/standalone.launch">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!-- Velocity multiplexer -->
+  <include file="$(find ca_vel_mux)/launch/mux.launch"/>
+
+  <!-- Localization pose -->
+  <param name="$(arg localization)/initial_pose_x" value="$(arg pose_x)"/>
+  <param name="$(arg localization)/initial_pose_y" value="$(arg pose_y)"/>
+  <param name="$(arg localization)/initial_pose_a" value="$(arg pose_Y)"/>
+
+  <!-- Localization -->
+  <include file="$(find ca_localization)/launch/localize.launch">
+    <arg name="ns" value="$(arg ns)"/>
+  </include>
+
+  <!-- Navigation -->
+  <include if="$(eval str(arg('localization'))!='none')"
+           file="$(find ca_move_base)/launch/navigate.launch">
+    <arg name="env"          value="$(arg env)"/>
+    <arg name="localization" value="$(arg localization)"/>
+    <arg name="ns"     value="$(arg ns)"/>
+  </include>
+
+  <!-- Battery consumer -->
+  <node name="battery_consumer" pkg="ca_gazebo" type="battery_consumer" output="screen" args="$(arg high_battery_consumption)"/>
+
+</launch>
