@@ -1,5 +1,8 @@
 from math import sqrt
 import numpy as np
+import geopandas as gpd
+from shapely.geometry import Polygon, LineString, Point, MultiLineString, MultiPolygon
+
 
 from FrontierExploration.preprocessing.grid.occupancy_grid import is_cell_empty, is_cell_empty
 
@@ -50,4 +53,56 @@ def raycast_in_every_direction(start_cell: np.ndarray, available_cells: np.ndarr
             ret.extend(visible_cells_to_add)
 
     return np.unique(ret,axis=0)
-                
+
+
+class RayCast:
+    def __init__(self, num_rays: int, ray_range: float, start_x: float = 0, start_y: float = 0):
+        self.start_x = start_x
+        self.start_y = start_y
+        self._num_rays = num_rays
+        self._ray_range = ray_range
+        self.raycast_df = gpd.GeoDataFrame(geometry=[LineString([(start_x, start_y), movement]) for movement in self.directions])
+
+    def run_on_df(self, layout_df: gpd.GeoDataFrame):
+        for index in tqdm(layout_df.index):
+            raycast.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
+        
+            
+    def intersect_with_polygon(self, polygon: Polygon, block_status: BlockStatus):
+        if block_status == BlockStatus.Occuped.value:
+            self.raycast_df["geometry"] = self.raycast_df["geometry"].apply(self.get_line_to_intersection, args=(polygon,))
+        if block_status == BlockStatus.Free.value:
+            poly_df = gpd.GeoDataFrame(geometry=[poly])
+            self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
+    
+    def get_line_to_intersection(self, line: LineString, polygon: Polygon):
+        origin = self.origin_point
+        if line.intersects(polygon):
+            lines_distances = {}
+            for point in line.intersection(polygon).coords:
+                line = LineString([origin,point])
+                lines_distances[line.length] = line
+            shorter = lines_distances[min(lines_distances.keys())] if len(lines_distances)!=0 else line
+        else:
+            shorter = line
+        return shorter        
+
+    @property
+    def visibility_percentage(self):
+        return 100*self.visibility/self._ray_range
+    
+    @property
+    def visibility(self):
+        self.raycast_df['length'] = self.raycast_df.apply(lambda row: row[0].length, axis=1)
+        return self.raycast_df['length'].mean()
+    
+    @property
+    def origin_point(self):
+        return Point(self.start_x, self.start_y)
+    
+    @property
+    def directions(self):
+        return [(self._ray_range*np.cos(angle)+self.start_x, self._ray_range*np.sin(angle)+self.start_y) for angle in np.linspace(0, 2 * np.pi, num=self._num_rays, endpoint=False)]
+
+    def plot(self, *args, **kwargs):
+        self.raycast_df.plot( *args, **kwargs)

@@ -15,6 +15,13 @@ from shapely.geometry import Polygon, box as Box
 from FrontierExploration.preprocessing.layout.polygons import Square
 from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
 
+
+class BlockStatus(Enum):
+    Free = 0
+    Occuped = 1
+    Unknown = 2
+
+
 class LayoutReader: 
     def __init__(self, file_name: str, file_extension: str,files_dir: str):
         self.files_dir = files_dir
@@ -97,6 +104,8 @@ class OccupancyDataFrame:
 
         self.layout_df = gpd.GeoDataFrame(geometry=polygons_list)
         self.layout_df["intersects"]= self.layout_df.intersects(clean_layout.unary_union)
+        self.layout_df.loc[layout_df["intersects"] == True, "status"] = BlockStatus.Occuped.value
+        self.layout_df.loc[layout_df["intersects"] == False, "status"] = BlockStatus.Unknown.value
         self.occupancy_df = self.layout_df.apply(self.get_center, axis=1, result_type='expand').pivot(index ='axis_x', columns ='axis_y', values='occuped')
 
     def plot(self, *args, **kwargs):
