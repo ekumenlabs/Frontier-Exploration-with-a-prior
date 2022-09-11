@@ -1,8 +1,10 @@
 from math import sqrt
+from enum import Enum
 import numpy as np
 import geopandas as gpd
 from shapely.geometry import Polygon, LineString, Point, MultiLineString, MultiPolygon
 
+from tqdm import tqdm
 
 from FrontierExploration.preprocessing.grid.occupancy_grid import is_cell_empty, is_cell_empty
 
@@ -55,6 +57,10 @@ def raycast_in_every_direction(start_cell: np.ndarray, available_cells: np.ndarr
     return np.unique(ret,axis=0)
 
 
+class BlockStatus(Enum):
+    Seen = 0
+    Occupied = 1
+    Unknown = 2
 class RayCast:
     def __init__(self, num_rays: int, ray_range: float, start_x: float = 0, start_y: float = 0):
         self.start_x = start_x
@@ -65,14 +71,14 @@ class RayCast:
 
     def run_on_df(self, layout_df: gpd.GeoDataFrame):
         for index in tqdm(layout_df.index):
-            raycast.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
+            self.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
         
             
     def intersect_with_polygon(self, polygon: Polygon, block_status: BlockStatus):
-        if block_status == BlockStatus.Occuped.value:
+        if block_status == BlockStatus.Occupied.value:
             self.raycast_df["geometry"] = self.raycast_df["geometry"].apply(self.get_line_to_intersection, args=(polygon,))
-        if block_status == BlockStatus.Free.value:
-            poly_df = gpd.GeoDataFrame(geometry=[poly])
+        if block_status == BlockStatus.Seen.value:
+            poly_df = gpd.GeoDataFrame(geometry=[polygon])
             self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
     
     def get_line_to_intersection(self, line: LineString, polygon: Polygon):
