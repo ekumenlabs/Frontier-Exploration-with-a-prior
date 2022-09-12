@@ -17,8 +17,8 @@
     <arg name="world_name"   value="$(arg world_name)"/>
   </include>
 
-  <arg name="pose1_x" default="0"/>
-  <arg name="pose1_y" default="0"/>
+  <arg name="pose1_x" default="10"/>
+  <arg name="pose1_y" default="10"/>
   <arg name="pose1_Y" default="0"/>
 
   <arg name="pose2_x" default="1"/>

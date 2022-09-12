@@ -70,8 +70,11 @@ class RayCast:
         self.raycast_df = gpd.GeoDataFrame(geometry=[LineString([(start_x, start_y), movement]) for movement in self.directions])
 
     def run_on_df(self, layout_df: gpd.GeoDataFrame):
-        for index in tqdm(layout_df.index):
+        for index in tqdm(layout_df[layout_df["status"] == BlockStatus.Occupied.value].index):
             self.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
+
+        for index in tqdm(layout_df[layout_df["status"] == BlockStatus.Seen.value].index):
+            self.intersect_with_polygon(layout_df['geometry'][index], BlockStatus.Seen.value)
         
             
     def intersect_with_polygon(self, polygon: Polygon, block_status: BlockStatus):
@@ -80,6 +83,7 @@ class RayCast:
         if block_status == BlockStatus.Seen.value:
             poly_df = gpd.GeoDataFrame(geometry=[polygon])
             self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
+            self.raycast_df.dropna(inplace=True)
     
     def get_line_to_intersection(self, line: LineString, polygon: Polygon):
         origin = self.origin_point
@@ -99,6 +103,7 @@ class RayCast:
     
     @property
     def visibility(self):
+        self.raycast_df.dropna(inplace=True)
         self.raycast_df['length'] = self.raycast_df.apply(lambda row: row[0].length, axis=1)
         return self.raycast_df['length'].mean()
     

@@ -13,6 +13,7 @@ from pcg_gazebo.generators import WorldGenerator
 from shapely.geometry import Polygon, box as Box
 
 from FrontierExploration.preprocessing.layout.polygons import Square
+from enum import Enum
 from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
 
 

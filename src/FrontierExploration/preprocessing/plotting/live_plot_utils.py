@@ -32,13 +32,16 @@ class GlobalState:
     def set_grid(self, grid: VisibilityGrid):
         with self._lock:
             self._grid = grid
+    def set_lock(self, lock):
+        self._lock = lock
 
 class LivePlotter:
     """
     Class responsible to plot a grid live and serve it to an http server.
     """
     gs = GlobalState()
-    def __init__(self, grid: VisibilityGrid):
+    def __init__(self, grid: VisibilityGrid, lock: Lock):
+        self.gs.set_lock(lock)
         LivePlotter.gs.set_grid(grid)
         self._app = dash.Dash(__name__)
         # describe the webpage layout
