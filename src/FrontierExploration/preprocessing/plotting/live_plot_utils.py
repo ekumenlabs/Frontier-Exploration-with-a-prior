@@ -3,7 +3,8 @@ import dash
 from dash import html
 from dash import dcc
 import plotly.graph_objects as go
-from FrontierExploration.preprocessing.grid.occupancy_grid import OccupancyGrid
+
+from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
 from dash.dependencies import Input, Output
 import io
 import base64
@@ -19,7 +20,7 @@ class GlobalState:
     """
     Global state for the live plot.
     """
-    def __init__(self, grid: Optional[OccupancyGrid] = None):
+    def __init__(self, grid: Optional[VisibilityGrid] = None):
         self._lock = Lock()
         self._grid = grid
     
@@ -28,7 +29,7 @@ class GlobalState:
         with self._lock:
             return self._grid
     
-    def set_grid(self, grid: OccupancyGrid):
+    def set_grid(self, grid: VisibilityGrid):
         with self._lock:
             self._grid = grid
 
@@ -37,7 +38,7 @@ class LivePlotter:
     Class responsible to plot a grid live and serve it to an http server.
     """
     gs = GlobalState()
-    def __init__(self, grid: OccupancyGrid):
+    def __init__(self, grid: VisibilityGrid):
         LivePlotter.gs.set_grid(grid)
         self._app = dash.Dash(__name__)
         # describe the webpage layout
@@ -58,7 +59,7 @@ class LivePlotter:
 
 
     @staticmethod
-    def grid_figure(grid: OccupancyGrid) -> go.Figure:
+    def grid_figure(grid: VisibilityGrid) -> go.Figure:
         """
         Creates a figure for the grid plot.
         :param grid: The grid to plot."""
@@ -71,3 +72,6 @@ class LivePlotter:
     
     def run(self):
         self._app.run_server(debug=False)
+
+    def stop(self):
+        self._app = None
