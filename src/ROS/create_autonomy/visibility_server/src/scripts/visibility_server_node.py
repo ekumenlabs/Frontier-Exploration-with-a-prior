@@ -8,6 +8,7 @@ from tqdm import tqdm
 from visibility_server.srv import Visibility, VisibilityRequest, VisibilityResponse
 from tf2_msgs.msg import TFMessage
 import numpy as np
+from signal import signal
 
 import rospy
 
@@ -26,6 +27,7 @@ class VisibilityServer(object):
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
         self._robot_pose = None
+        self._plotter = LivePlotter(self._grid, self._lock)
     
     def _occupancy_grid_cb(self, msg: OccupancyGrid) -> None:
         self._map_cnt += 1
@@ -71,10 +73,13 @@ class VisibilityServer(object):
         """
         Main entrypoint for the visibility server node.
             """
-        _plotter = LivePlotter(self._grid, self._lock)
-        _plotter.run()
+        self._plotter.run()
         while not rospy.is_shutdown():
             rospy.sleep(1)
+    def stop(self):
+        self._plotter.stop()
+        self._plotter = None
+
 
 BASE_FILES_DIR = "/create_ws/Frontier-Exploration-with-a-prior/Notebooks/files"
 
@@ -90,6 +95,4 @@ if __name__ == '__main__':
         visibility_server = VisibilityServer(grid=visibility_grid)
         visibility_server.run()
     except rospy.ROSInterruptException:
-        pass
-    except:
-        exit(0)
+        visibility_server.stop()

@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="visibility_server" type="robot_position_2d.py" name="robot_position_2d">
+  </node>
+  <node pkg="visibility_server" type="visibility_server_node.py" name="visibility_server" output="screen">
+  </node>
+</launch>

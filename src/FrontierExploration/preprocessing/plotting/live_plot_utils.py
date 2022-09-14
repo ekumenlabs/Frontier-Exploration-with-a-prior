@@ -12,7 +12,7 @@ import matplotlib
 # this is actually important since we're plotting to a string, and we don't want a window to be created.
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-from threading import Lock
+from threading import Lock, Thread
 
 
 
@@ -74,7 +74,8 @@ class LivePlotter:
         return f"data:image/png;base64,{data}"
     
     def run(self):
-        self._app.run_server(debug=False)
+        self._app.run(debug=False, port=12346)
+        
 
     def stop(self):
         self._app = None
