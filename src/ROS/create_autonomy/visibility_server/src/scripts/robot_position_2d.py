@@ -9,18 +9,20 @@ class RobotPosition2d():
     Subscribe to robots position and publishes it in an easy to parse format.
     """
     RATE = 10 # [Hz]
-    TARGET_FRAME = "base_link"
-    SOURCE_FRAME = "map"
+    SOURCE_FRAME = "create1/base_link"
+    TARGET_FRAME = "map"
     def __init__(self):
         self._tf_listener = TransformListener()
         self._rate = rospy.Rate(self.RATE)
         self._robot_position_pub = rospy.Publisher("robot_position_2d", Point, queue_size=10)
 
     def get_robot_position(self):
-        can_transform = self._tf_listener.canTransform(self.TARGET_FRAME, self.SOURCE_FRAME, rospy.Time.now())
-        if not can_transform:
-            return None
-        trans, _ = self._tf_listener.lookupTransform(self.TARGET_FRAME, self.SOURCE_FRAME, rospy.Time.now())
+        now = rospy.Time.now()
+        try:
+            self._tf_listener.waitForTransform("/map", "/create1/base_link", now, rospy.Duration(secs=4))
+        except:
+            return
+        trans, _ = self._tf_listener.lookupTransform(self.TARGET_FRAME, self.SOURCE_FRAME, now)
         ret = Point()
         ret.x = trans[0]
         ret.y = trans[1]
