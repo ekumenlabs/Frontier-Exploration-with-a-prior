@@ -7,6 +7,7 @@ import numpy as np
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
 from pcg_gazebo.generators.creators import extrude
+import shapely
 from pcg_gazebo.generators.shapes import random_rectangles, \
     random_rectangle, rectangle
 from pcg_gazebo.generators import WorldGenerator
@@ -30,6 +31,13 @@ class LayoutReader:
         self.file_extension = file_extension
         self.world_generator = WorldGenerator()
         self.layout = gpd.read_file(f"{files_dir}{file_name}.{file_extension}")
+        # self.layout["geometry"] = self.layout["geometry"].apply(lambda x: x.buffer(0.3)) # buffer 30cm.
+        bounds = self.layout.unary_union.bounds
+        tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
+
+        self.layout["geometry"] = self.layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero))
+        # self.layout.geometry = shapely.affinity.affine_transform(self.layout.unary_union, tf_to_zero)
+        print("here")
     
     def create_gazebo_model(
         self,

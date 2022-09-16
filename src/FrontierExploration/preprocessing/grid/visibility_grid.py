@@ -1,3 +1,5 @@
+from ast import Mult
+from audioop import getsample
 from tracemalloc import start
 from FrontierExploration.preprocessing.grid.raycasting import RayCast, BlockStatus
 from shapely.geometry import Point
@@ -6,24 +8,35 @@ import os
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from rasterio.features import shapes, rasterize
+from shapely.geometry import Polygon, MultiPolygon
+from shapely.affinity import affine_transform
+
+import matplotlib.pyplot as plt
+
+UNKNOWN = -1
+OCCUPIED = 100
+SEEN = 50
+
+def get_polygons_from_shape(shape) -> MultiPolygon:
+    ret = None
+    for s in shape:
+        if ret is None:
+            ret = Polygon(*s[0]["coordinates"])
+        try:
+            shape = shape.union(Polygon(*s[0]["coordinates"]))
+        except Exception as e:
+            print(e)
+            pass
+    return ret
 
 class VisibilityGrid():
-    def __init__(self, layout: gpd.GeoDataFrame, square_size: float =1) -> None:
+    def __init__(self, layout: Polygon, square_size: float =0.05) -> None:
         self._square_size = square_size
-        clean_layout = layout['geometry']
-        xmin, ymin, xmax, ymax = clean_layout.total_bounds
-        polygons_list = []
-        for xstart in np.nditer(np.arange(int(xmin) - square_size, int(xmax), square_size)):
-            for ystart in  np.nditer(np.arange(int(ymin) - square_size, int(ymax), square_size)):
-                polygons_list.append(Square(square_size, xstart, ystart))
-        
-        layout_df = gpd.GeoDataFrame(geometry=polygons_list)
-        layout_df["intersects"]= layout_df.intersects(clean_layout.unary_union)
-        layout_df["status"]= BlockStatus.Unknown.value
-        layout_df["status"].loc[layout_df["intersects"]] = BlockStatus.Occupied.value
-        self._occupancy_df = layout_df
-        self._occupancy_df["x"] = self._occupancy_df["geometry"].centroid.x
-        self._occupancy_df["y"] = self._occupancy_df["geometry"].centroid.y
+        layout = affine_transform(layout, [1.0/square_size, 0, 0, 1.0/square_size, 0, 0])
+        bounds = layout.bounds
+        img_size = (int(bounds[3] - bounds[1]) + int(1 / square_size), int(bounds[2] - bounds[0]) + int(1 / square_size))
+        self._layout_image : np.ndarray  = rasterize([layout], out_shape=img_size, fill=UNKNOWN, default_value=OCCUPIED)
         self._last_raycast = None
     
     def visibility(self, x: float, y: float) -> float:
@@ -31,30 +44,9 @@ class VisibilityGrid():
         raycast.run_on_df(self._occupancy_df)
         self._last_raycast = raycast
         return raycast.visibility_percentage
-    
-    def set_cell(self, x: float, y:float , status: BlockStatus)->None:
-        # revisit, does this need to be the center
-        closest_x_index = np.searchsorted(self._occupancy_df['x'], x, side='left')
-        closest_y_index = np.searchsorted(self._occupancy_df['y'], y, side='left')
-        closest_x = self._occupancy_df.x.iloc[closest_x_index]
-        closest_y = self._occupancy_df.y.iloc[closest_y_index]
-        idx  = self._occupancy_df.loc[self._occupancy_df.x == closest_x].loc[self._occupancy_df.y == closest_y].index
-        self._occupancy_df.iloc[idx, self._occupancy_df.columns.get_loc('status')] = status.value
-    
-    def set_occupied(self, x:float ,y:float) -> None:
-        self.set_cell(x=x, y=y, status=BlockStatus.Occupied)
-
-    def set_seen(self, x:float ,y:float) -> None:
-        self.set_cell(x=x, y=y, status=BlockStatus.Seen)
 
     def plot(self) -> None:
-        if self._last_raycast is not None:
-            self._last_raycast.raycast_df["status"] = 5
-            df_to_plot = self._last_raycast.raycast_df.append(self._occupancy_df)
-            df_to_plot.plot(column="status")
-        else:
-            self._occupancy_df.plot(column="status")
-
+        plt.imshow(self._layout_image)
 
 def main() -> None:
     files_dir = f"/home/ramiro/Frontier-Exploration-with-a-prior/Notebooks/files"

@@ -1,8 +1,10 @@
 #!/usr/bin/python3.8
+from curses import isendwin
 from datetime import datetime
 from multiprocessing import Lock
+from sqlite3 import SQLITE_RECURSIVE, DateFromTicks
 import geopandas as gpd
-from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
+from FrontierExploration.preprocessing.grid.visibility_grid import OCCUPIED, UNKNOWN, VisibilityGrid
 from FrontierExploration.preprocessing.plotting.live_plot_utils import LivePlotter
 from nav_msgs.msg  import OccupancyGrid
 from tqdm import tqdm
@@ -11,8 +13,15 @@ from tf2_msgs.msg import TFMessage
 import numpy as np
 from signal import signal
 from geometry_msgs.msg import Point
+import matplotlib.pyplot as plt
+import shapely
+from math import isclose
 
 import rospy
+
+START_POS = (8, 27) # [m] in blueprints frame
+CANARY = 155
+VIEWED = 45
 
 
 class VisibilityServer(object):
@@ -24,8 +33,6 @@ class VisibilityServer(object):
     def __init__(self, grid: VisibilityGrid):
         self._lock = Lock()
         self._grid = grid
-        self._skip_maps = 20
-        self._map_cnt = self._skip_maps - 1
         self._robot_pose = None
         self._robot_pose_sub = rospy.Subscriber("/robot_position_2d", Point, self._robot_pose_cb)
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
@@ -52,55 +59,51 @@ class VisibilityServer(object):
 
 
     def _occupancy_grid_cb(self, msg: OccupancyGrid) -> None:
-        if self._robot_pose is None:
-            return
-        self._map_cnt += 1
-        self._map_cnt %= self._skip_maps
-        if not self._map_cnt == 0:
-            return
+        # if self._robot_pose is None:
+        #     return
         metadata = msg.info
         origin = metadata.origin
         origin_translation = np.array([origin.position.x, origin.position.y, origin.position.z])
-        origin_x = origin_translation[0] + 10
-        origin_y = origin_translation[1] + 10
+        origin_x = origin_translation[0] + START_POS[0]
+        origin_y = origin_translation[1] + START_POS[1]
         height = metadata.height
         width = metadata.width
-        data = np.asarray(msg.data, np.int8).reshape(width, height)
-        # subsample data.        
-        resolution = metadata.resolution
-        cells_to_keep = int(self.RADIUS_OF_INTEREST / resolution) * 2
-        if data.shape[0] > cells_to_keep or data.shape[1] > cells_to_keep:
-            data = self._subsample_data(data=data, origin_x=origin_x, origin_y=origin_y,
-                                        resolution=resolution, cells_to_keep=cells_to_keep)
+        data = np.asarray(msg.data, np.int8).reshape(height, width)
+        assert isclose(metadata.resolution, self._grid._square_size, rel_tol=1) , "Square size and maps resolution should match."
+        # process_between =  int(self._grid._square_size / resolution)
+        # seen_indices = np.nonzero(np.logical_and(data < self.OCCUPIED_THRESHOLD, data != -1))
+        # occupied_indices = np.nonzero(data > self.OCCUPIED_THRESHOLD)
+        print(origin)
+        print(origin_x)
+        print(origin_y)
 
-        process_between =  int(self._grid._square_size / resolution)
-        seen_indices = np.nonzero(np.logical_and(data < self.OCCUPIED_THRESHOLD, data != -1))
-        occupied_indices = np.nonzero(data > self.OCCUPIED_THRESHOLD)
+        idx_offset_x = int(origin_x // metadata.resolution)
+        idx_offset_y = int(origin_y // metadata.resolution)
+        # account for scans outside of the blueprint
+        if idx_offset_x < 0:
+            data = data[: , -idx_offset_x:]
+            height += idx_offset_x
+            idx_offset_x = 0
 
-        # n X m celdas
 
-
-        """
-        A B C
-        D E F
-        G H I
-
-        """
-        # G = ORIGIN
-        # H = ORIGIN + (resolution, 0)
-
-         
+        if idx_offset_y < 0:
+            data = data[-idx_offset_y:, :]
+            width += idx_offset_y
+            idx_offset_y = 0
+        data = data
+        data[data> 0.65] = OCCUPIED
+        data[np.logical_and(data<= 0.65, data!=UNKNOWN)] = VIEWED
+        data[data == UNKNOWN] = 0
         with self._lock:
             start = datetime.now()
-            for x, y  in zip(seen_indices[0][::process_between], seen_indices[1][::process_between]):
-                x_map_frame = origin_x + resolution * x
-                y_map_frame = origin_y + resolution * y
-                self._grid.set_seen(x_map_frame, y_map_frame)
-            for x, y  in zip(occupied_indices[0][::process_between], occupied_indices[1][::process_between]):
-                x_map_frame = origin_x + resolution * x
-                y_map_frame = origin_y + resolution * y
-                self._grid.set_occupied(x_map_frame, y_map_frame)
-            print(f"Updating grids took {datetime.now() - start}")
+            slice_cpy = self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height].copy()
+            slice_cpy = np.add(data, slice_cpy)
+            slice_cpy[slice_cpy >= OCCUPIED] = OCCUPIED
+            slice_cpy[np.logical_and(slice_cpy < OCCUPIED, slice_cpy!=UNKNOWN)] = VIEWED
+            self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height] = slice_cpy
+            print(f"Took {datetime.now() - start} to update map.")
+            
+            # self._grid.s
 
     
     def _visibility_cb(self, req: VisibilityRequest) -> VisibilityResponse:
@@ -133,7 +136,12 @@ if __name__ == '__main__':
 
     file_dir = f"{BASE_FILES_DIR}/small_house_clean.dxf"
     layout = gpd.read_file(file_dir)
-    visibility_grid = VisibilityGrid(layout=layout, square_size=1)
+
+    bounds = layout.unary_union.bounds
+    tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
+
+    layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.3)
+    visibility_grid = VisibilityGrid(layout=layout, square_size=0.05)
     try:
         visibility_server = VisibilityServer(grid=visibility_grid)
         visibility_server.run()
