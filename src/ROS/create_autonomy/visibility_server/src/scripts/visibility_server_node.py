@@ -92,14 +92,18 @@ class VisibilityServer(object):
             idx_offset_y = 0
         data = data
         data[data> 0.65] = OCCUPIED
-        data[np.logical_and(data<= 0.65, data!=UNKNOWN)] = VIEWED
-        data[data == UNKNOWN] = 0
+        data[np.logical_and(data<= 0.65, data!=UNKNOWN)] = 0
+        data[data == UNKNOWN] = 1
         with self._lock:
+            # TODO comment this logic
             start = datetime.now()
             slice_cpy = self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height].copy()
-            slice_cpy = np.add(data, slice_cpy)
-            slice_cpy[slice_cpy >= OCCUPIED] = OCCUPIED
-            slice_cpy[np.logical_and(slice_cpy < OCCUPIED, slice_cpy!=UNKNOWN)] = VIEWED
+            slice_cpy = np.multiply(data, slice_cpy)
+            slice_cpy[slice_cpy == 0] = VIEWED
+            slice_cpy[slice_cpy == VIEWED * OCCUPIED] = OCCUPIED
+            slice_cpy[slice_cpy == -OCCUPIED] = OCCUPIED
+            slice_cpy[slice_cpy == OCCUPIED * OCCUPIED] = OCCUPIED
+            # slice_cpy[np.logical_and(slice_cpy < OCCUPIED, slice_cpy!=UNKNOWN)] = VIEWED
             self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height] = slice_cpy
             print(f"Took {datetime.now() - start} to update map.")
             
