@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(explore_lite)
+project(blueprint_explore)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf
   visualization_msgs
+  message_runtime
+  visibility_server
 )
 
 ###################################
@@ -31,7 +33,9 @@ catkin_package(
     roscpp
     std_msgs
     tf
+    message_runtime
     visualization_msgs
+    visibility_server
 )
 
 ###########

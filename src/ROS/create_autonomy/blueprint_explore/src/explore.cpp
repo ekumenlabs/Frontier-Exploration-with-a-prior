@@ -38,6 +38,7 @@
 #include <explore/explore.h>
 
 #include <thread>
+#include <visibility_server/Visibility.h>
 
 inline static bool operator==(const geometry_msgs::Point& one,
                               const geometry_msgs::Point& two)
@@ -58,6 +59,7 @@ Explore::Explore()
   , prev_distance_(0)
   , last_markers_count_(0)
 {
+  ROS_INFO("Waiting to connect to visibility server");
   double timeout;
   double min_frontier_size;
   private_nh_.param("planner_frequency", planner_frequency_, 1.0);
@@ -69,9 +71,13 @@ Explore::Explore()
   private_nh_.param("gain_scale", gain_scale_, 1.0);
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
 
+  visibility_client_ = private_nh_.serviceClient<visibility_server::Visibility>("/visibility");
+  visibility_client_.waitForExistence();
+
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
                                                  potential_scale_, gain_scale_,
-                                                 min_frontier_size);
+                                                 min_frontier_size,
+                                                 visibility_client_);
 
   if (visualize_) {
     marker_array_publisher_ =
@@ -301,6 +307,7 @@ int main(int argc, char** argv)
                                      ros::console::levels::Debug)) {
     ros::console::notifyLoggerLevelsChanged();
   }
+  ROS_INFO("Waiting to connect to visibility server");
   explore::Explore explore;
   ros::spin();
 

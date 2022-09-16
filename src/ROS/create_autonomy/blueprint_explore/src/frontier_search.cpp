@@ -7,6 +7,7 @@
 #include <geometry_msgs/Point.h>
 
 #include <explore/costmap_tools.h>
+#include <visibility_server/Visibility.h>
 
 namespace frontier_exploration
 {
@@ -16,11 +17,13 @@ using costmap_2d::FREE_SPACE;
 
 FrontierSearch::FrontierSearch(costmap_2d::Costmap2D* costmap,
                                double potential_scale, double gain_scale,
-                               double min_frontier_size)
+                               double min_frontier_size,
+                               const ros::ServiceClient& visibility_client)
   : costmap_(costmap)
   , potential_scale_(potential_scale)
   , gain_scale_(gain_scale)
   , min_frontier_size_(min_frontier_size)
+  , visibility_client_(visibility_client)
 {
 }
 
@@ -85,7 +88,7 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
 
   // set costs of frontiers
   for (auto& frontier : frontier_list) {
-    frontier.cost = frontierCost(frontier);
+    frontier.cost = frontierVisibilityCost(frontier);
   }
   std::sort(
       frontier_list.begin(), frontier_list.end(),
@@ -186,6 +189,18 @@ bool FrontierSearch::isNewFrontierCell(unsigned int idx,
   }
 
   return false;
+}
+
+double FrontierSearch::frontierVisibilityCost(const Frontier& frontier){
+  visibility_server::Visibility srv;
+  srv.request.x_map_frame = frontier.centroid.x;
+  srv.request.y_map_frame = frontier.centroid.y;
+  if(visibility_client_.call(srv)){
+    ROS_INFO_STREAM("Visibility for " << srv.request.x_map_frame << ", " << srv.request.y_map_frame << " succeeded and is " << srv.response.visibility);
+    return srv.response.visibility;
+  }
+  ROS_INFO_STREAM("Visibility for " << srv.request.x_map_frame << ", " << srv.request.y_map_frame << " failed. Returning 0. ");
+  return 0;
 }
 
 double FrontierSearch::frontierCost(const Frontier& frontier)

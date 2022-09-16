@@ -89,6 +89,7 @@ private:
   ros::NodeHandle relative_nh_;
   ros::Publisher marker_array_publisher_;
   tf::TransformListener tf_listener_;
+  ros::ServiceClient visibility_client_;
 
   Costmap2DClient costmap_client_;
   actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction>

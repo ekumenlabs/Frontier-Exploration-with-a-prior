@@ -2,6 +2,7 @@
 #define FRONTIER_SEARCH_H_
 
 #include <costmap_2d/costmap_2d.h>
+#include <ros/ros.h>
 
 namespace frontier_exploration
 {
@@ -35,7 +36,7 @@ public:
    * @param costmap Reference to costmap data to search.
    */
   FrontierSearch(costmap_2d::Costmap2D* costmap, double potential_scale,
-                 double gain_scale, double min_frontier_size);
+                 double gain_scale, double min_frontier_size, const ros::ServiceClient& visibility_client);
 
   /**
    * @brief Runs search implementation, outward from the start position
@@ -77,7 +78,18 @@ protected:
    */
   double frontierCost(const Frontier& frontier);
 
+
+  /**
+   * @brief computes frontier by leveraging the visibility server.
+   * @details cost function is defined by the frontier's visibility
+   *
+   * @param frontier frontier for which compute the cost
+   * @return cost of the frontier
+   */
+  double frontierVisibilityCost(const Frontier& frontier);
+
 private:
+  ros::ServiceClient visibility_client_;
   costmap_2d::Costmap2D* costmap_;
   unsigned char* map_;
   unsigned int size_x_, size_y_;
