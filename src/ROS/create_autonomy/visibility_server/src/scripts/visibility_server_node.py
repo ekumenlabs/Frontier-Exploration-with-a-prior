@@ -1,28 +1,18 @@
 #!/usr/bin/python3.8
-from curses import isendwin
 from datetime import datetime
 from multiprocessing import Lock
-from sqlite3 import SQLITE_RECURSIVE, DateFromTicks
 import geopandas as gpd
-from FrontierExploration.preprocessing.grid.visibility_grid import OCCUPIED, UNKNOWN, VisibilityGrid
+from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid, SEEN, OCCUPIED, UNKNOWN
 from FrontierExploration.preprocessing.plotting.live_plot_utils import LivePlotter
 from nav_msgs.msg  import OccupancyGrid
-from tqdm import tqdm
 from visibility_server.srv import Visibility, VisibilityRequest, VisibilityResponse
-from tf2_msgs.msg import TFMessage
 import numpy as np
-from signal import signal
-from geometry_msgs.msg import Point
-import matplotlib.pyplot as plt
 import shapely
 from math import isclose
 
 import rospy
 
 START_POS = (8, 27) # [m] in blueprints frame
-CANARY = 155
-VIEWED = 45
-
 
 class VisibilityServer(object):
     """
@@ -34,33 +24,22 @@ class VisibilityServer(object):
         self._lock = Lock()
         self._grid = grid
         self._robot_pose = None
-        self._robot_pose_sub = rospy.Subscriber("/robot_position_2d", Point, self._robot_pose_cb)
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
         self._plotter = LivePlotter(self._grid, self._lock)
-    
-    def _robot_pose_cb(self, msg:Point) -> None:
-        self._robot_pose = Point(msg.x+10, msg.y+10, msg.z)
-
 
 
     def _subsample_data(self, data: np.ndarray, origin_x: float, origin_y:float, resolution:float, cells_to_keep:int) -> np.ndarray:
         robot_position_in_cells_x = int((self._robot_pose.x - origin_x) / resolution)
         robot_position_in_cells_y = int((self._robot_pose.y - origin_y) / resolution)
-
         lower_cell_bound_x = max(0, robot_position_in_cells_x - cells_to_keep)
         lower_cell_bound_y = max(0, robot_position_in_cells_y - cells_to_keep)
         upper_cell_bound_x = min(data.shape[0], robot_position_in_cells_x + cells_to_keep)
         upper_cell_bound_y = min(data.shape[1], robot_position_in_cells_y + cells_to_keep)
-        print(self._robot_pose)
-        # robot position_map = origin + cell / resolution
-
         return data[lower_cell_bound_x:upper_cell_bound_x][lower_cell_bound_y:upper_cell_bound_y]
 
 
     def _occupancy_grid_cb(self, msg: OccupancyGrid) -> None:
-        # if self._robot_pose is None:
-        #     return
         metadata = msg.info
         origin = metadata.origin
         origin_translation = np.array([origin.position.x, origin.position.y, origin.position.z])
@@ -70,12 +49,6 @@ class VisibilityServer(object):
         width = metadata.width
         data = np.asarray(msg.data, np.int8).reshape(height, width)
         assert isclose(metadata.resolution, self._grid._square_size, rel_tol=1) , "Square size and maps resolution should match."
-        # process_between =  int(self._grid._square_size / resolution)
-        # seen_indices = np.nonzero(np.logical_and(data < self.OCCUPIED_THRESHOLD, data != -1))
-        # occupied_indices = np.nonzero(data > self.OCCUPIED_THRESHOLD)
-        print(origin)
-        print(origin_x)
-        print(origin_y)
 
         idx_offset_x = int(origin_x // metadata.resolution)
         idx_offset_y = int(origin_y // metadata.resolution)
@@ -99,15 +72,13 @@ class VisibilityServer(object):
             start = datetime.now()
             slice_cpy = self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height].copy()
             slice_cpy = np.multiply(data, slice_cpy)
-            slice_cpy[slice_cpy == 0] = VIEWED
-            slice_cpy[slice_cpy == VIEWED * OCCUPIED] = OCCUPIED
+            slice_cpy[slice_cpy == 0] = SEEN
+            slice_cpy[slice_cpy == SEEN * OCCUPIED] = OCCUPIED
             slice_cpy[slice_cpy == -OCCUPIED] = OCCUPIED
             slice_cpy[slice_cpy == OCCUPIED * OCCUPIED] = OCCUPIED
-            # slice_cpy[np.logical_and(slice_cpy < OCCUPIED, slice_cpy!=UNKNOWN)] = VIEWED
             self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height] = slice_cpy
-            print(f"Took {datetime.now() - start} to update map.")
-            
-            # self._grid.s
+            self._grid.update_layout()
+            print(f"Took {datetime.now() - start} to update the map.")
 
     
     def _visibility_cb(self, req: VisibilityRequest) -> VisibilityResponse:
