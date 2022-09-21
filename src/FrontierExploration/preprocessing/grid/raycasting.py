@@ -114,6 +114,8 @@ class RayCast:
     @property
     def visibility(self):
         self.raycast_df.dropna(inplace=True)
+        if self.raycast_df.empty:
+            return 0
         self.raycast_df['length'] = self.raycast_df.apply(lambda row: row[0].length, axis=1)
         return self.raycast_df['length'].mean()
     
