@@ -8,7 +8,6 @@ from shapely.geometry import Polygon, LineString, Point
 from tqdm import tqdm
 
 from FrontierExploration.preprocessing.grid.occupancy_grid import is_cell_empty, is_cell_empty
-from FrontierExploration.preprocessing.grid.visibility_grid import OCCUPIED, SEEN, UNKNOWN
 
 
 UNKNOWN = -1

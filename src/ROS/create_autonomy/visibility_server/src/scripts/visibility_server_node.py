@@ -2,7 +2,8 @@
 from datetime import datetime
 from multiprocessing import Lock
 import geopandas as gpd
-from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid, SEEN, OCCUPIED, UNKNOWN
+from FrontierExploration.preprocessing.grid.raycasting import SEEN, OCCUPIED, UNKNOWN
+from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
 from FrontierExploration.preprocessing.plotting.live_plot_utils import LivePlotter
 from nav_msgs.msg  import OccupancyGrid
 from visibility_server.srv import Visibility, VisibilityRequest, VisibilityResponse
