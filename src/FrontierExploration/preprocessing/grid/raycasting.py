@@ -3,7 +3,7 @@ from typing import Optional
 from enum import Enum
 import numpy as np
 import geopandas as gpd
-from shapely.geometry import Polygon, LineString, Point
+from shapely.geometry import Polygon, LineString, Point, MultiLineString
 
 from tqdm import tqdm
 
@@ -92,7 +92,7 @@ class RayCast:
             
     def intersect_with_polygon(self, polygon: Polygon, block_status: BlockStatus):
         if block_status == BlockStatus.Occupied.value:
-            self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
+            self.raycast_df["geometry"] = self.raycast_df["geometry"].apply(self.get_line_to_intersection, args=(polygon,))
         if block_status == BlockStatus.Seen.value:
             poly_df = gpd.GeoDataFrame(geometry=[polygon])
             self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
@@ -101,14 +101,11 @@ class RayCast:
     def get_line_to_intersection(self, line: LineString, polygon: Polygon):
         origin = self.origin_point
         if line.intersects(polygon):
-            lines_distances = {}
-            for point in line.intersection(polygon).coords:
-                line = LineString([origin,point])
-                lines_distances[line.length] = line
-            shorter = lines_distances[min(lines_distances.keys())] if len(lines_distances)!=0 else line
-        else:
-            shorter = line
-        return shorter        
+            inter_line = line.difference(polygon)
+            if isinstance(inter_line, MultiLineString):
+                return inter_line[0]
+            return inter_line
+        return line        
 
     @property
     def visibility_percentage(self):
