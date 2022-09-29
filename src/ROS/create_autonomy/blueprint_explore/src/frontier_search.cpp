@@ -197,7 +197,8 @@ double FrontierSearch::frontierVisibilityCost(const Frontier& frontier){
   srv.request.y_map_frame = frontier.centroid.y;
   if(visibility_client_.call(srv)){
     ROS_INFO_STREAM("Visibility for " << srv.request.x_map_frame << ", " << srv.request.y_map_frame << " succeeded and is " << srv.response.visibility);
-    return srv.response.visibility;
+    const bool is_visibility_zero = srv.response.visibility <= 1;
+    return is_visibility_zero ? 100.0 : 100.0 / srv.response.visibility;
   }
   ROS_INFO_STREAM("Visibility for " << srv.request.x_map_frame << ", " << srv.request.y_map_frame << " failed. Returning 0. ");
   return 0;

@@ -54,6 +54,8 @@ class VisibilityServer(object):
         idx_offset_x = int(origin_x // metadata.resolution)
         idx_offset_y = int(origin_y // metadata.resolution)
         # account for scans outside of the blueprint
+        img_width = self._grid._layout_image.shape[0]
+        img_height = self._grid._layout_image.shape[1]
         if idx_offset_x < 0:
             data = data[: , -idx_offset_x:]
             height += idx_offset_x
@@ -64,7 +66,14 @@ class VisibilityServer(object):
             data = data[-idx_offset_y:, :]
             width += idx_offset_y
             idx_offset_y = 0
-        data = data
+        
+        width = min(width, img_width)
+        height = min(height, img_height)
+        print(self._grid._layout_image.shape)
+        print(width, height)
+
+        data = data[:width, :height]
+        print(data.shape)
         data[data> 0.65] = OCCUPIED
         data[np.logical_and(data<= 0.65, data!=UNKNOWN)] = 0
         data[data == UNKNOWN] = 1
@@ -88,7 +97,7 @@ class VisibilityServer(object):
         """
         response = VisibilityResponse()
         with self._lock:
-            response.visibility =  int(self._grid.visibility(req.x_map_frame, req.y_map_frame))
+            response.visibility =  int(self._grid.visibility(req.x_map_frame + START_POS[0], req.y_map_frame + START_POS[1]))
         return response
 
     def run(self):
