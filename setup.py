@@ -15,6 +15,9 @@ with open('requirements.txt') as f:
                     license='Private',
                     packages=setuptools.find_packages(where="src"),
                     package_dir={"": "src"},
+                    entry_points={
+                        'console_scripts': ['fesh=helper.main:app'],
+                    },
                     include_package_data=True,
                     zip_safe=False,
                     install_requires=required)

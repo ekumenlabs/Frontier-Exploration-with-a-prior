@@ -1,6 +1,4 @@
-import os
-import argparse
-import datetime
+from typing import Optional
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
 from pcg_gazebo.generators.creators import extrude
@@ -12,8 +10,11 @@ from pcg_gazebo.generators import WorldGenerator
 class SynteticWorld:
     def __init__(
         self, 
-        name: str, 
-        n_rectangles: int, 
+        name: str,
+        output_dir: str,
+        n_rectangles: int,
+        n_in_rectangles: int,
+        n_points: int,
         x_room_range: int = 50,
         y_room_range: int = 50,
         wall_thickness: float = 0.1,
@@ -21,13 +22,18 @@ class SynteticWorld:
     ):    
         self.world_name = name
         self.n_rectangles = n_rectangles
+        self.n_internal_rectangles = n_in_rectangles
+        self.n_points = n_points
         self.x_room_range = x_room_range
         self.y_room_range = y_room_range
         self.wall_thickness = wall_thickness
         self.wall_height = wall_height
-        self.export_models_dir = os.path.join(os.path.expanduser('~'), '.gazebo', 'models')
-        self.export_world_dir = os.path.join(os.path.expanduser('~'), '.gazebo', 'worlds')
+        self.export_models_dir = f"{output_dir}/models"
+        self.export_world_dir = f"{output_dir}/worlds"
         self.wall_polygon = self.create_polygon()
+        # Create a world generator to place
+        # objects in the world
+        self.world_generator = WorldGenerator()
 
         self.n_cubes = None
         self.n_cylinders = None
@@ -59,20 +65,46 @@ class SynteticWorld:
                 raise ValueError(
                     'Number of rectangles is invalid, provided={}'.format(
                        self.n_rectangles))
-        elif n_points is not None:
-            if n_points < 3:
+        elif self.n_points is not None:
+            if self.n_points < 3:
                 raise ValueError(
                     'Number of points for triangulation must be at least 3,'
-                    ' provided={}'.format(n_points))
+                    ' provided={}'.format(self.n_points))
             wall_polygon = random_points_to_triangulation(
-                n_points)
+                self.n_points)
         else:
             raise ValueError(
                 'No number of rectangles and no number of points for'
                 ' triangulation were provided')
+        if self.n_internal_rectangles is not None:
+            if self.n_internal_rectangles > 1:
+                internal_polygon = random_rectangles(
+                        n_rect=self.n_internal_rectangles,
+                        x_center_min=-self.x_room_range / 2.,
+                        x_center_max=self.x_room_range / 2.,
+                        y_center_min=-self.y_room_range / 2.,
+                        y_center_max=self.y_room_range / 2.,
+                        delta_x_min=self.x_room_range / 4.,
+                        delta_x_max=self.x_room_range / 2,
+                        delta_y_min=self.y_room_range / 4.,
+                        delta_y_max=self.y_room_range / 2)
+            elif self.n_internal_rectangles == 1:
+                internal_polygon = random_rectangle(
+                        delta_x_min=self.x_room_range / 4.,
+                        delta_x_max=self.x_room_range / 2,
+                        delta_y_min=self.y_room_range / 4.,
+                        delta_y_max=self.y_room_range / 2)
+            wall_polygon = wall_polygon.difference(internal_polygon)
         return wall_polygon
     
-    def create_world(self):
+    def create_world(
+        self,
+        n_cubes: Optional[int] = None,
+        cube_size: Optional[float] = 1,
+        show=True):
+
+        self.n_cubes = n_cubes
+
         # Create the wall model based on the extruded
         # boundaries of the polygon
         walls_model = extrude(
@@ -84,27 +116,25 @@ class SynteticWorld:
             color='xkcd')
         walls_model.name = self.world_name + '_walls'
 
-        # Create a world generator to place
-        # objects in the world
-        world_generator = WorldGenerator()
+
 
         # Add walls and ground plane to the world
-        world_generator.world.add_model(
+        self.world_generator.world.add_model(
             tag=walls_model.name,
             model=walls_model)
-        world_generator.world.add_model(
+        self.world_generator.world.add_model(
             tag='ground_plane',
             model=SimulationModel.from_gazebo_model('ground_plane'))
 
         # Retrieve the free space polygon where objects
         # can be placed within the walls
-        free_space_polygon = world_generator.world.get_free_space_polygon(
+        free_space_polygon = self.world_generator.world.get_free_space_polygon(
             ground_plane_models=[walls_model.name],
             ignore_models=['ground_plane'])
 
         # Add the workspace constraint to the
         # generator
-        world_generator.add_constraint(
+        self.world_generator.add_constraint(
             name='room_workspace',
             type='workspace',
             frame='world',
@@ -114,7 +144,7 @@ class SynteticWorld:
 
         # Add constraint to place all object
         # tangent to the ground
-        world_generator.add_constraint(
+        self.world_generator.add_constraint(
             name='tangent_to_ground_plane',
             type='tangent',
             frame='world',
@@ -130,12 +160,12 @@ class SynteticWorld:
         # Add assets
         models = dict()
         if self.n_cubes is not None and self.n_cubes > 0:
-            world_generator.add_asset(
+            self.world_generator.add_asset(
                 tag='box',
                 description=dict(
                     type='box',
                     args=dict(
-                        size="__import__('numpy').random.uniform(0.1, 1, 3)",
+                        size=f"__import__('numpy').random.uniform(0.1, {cube_size}, 3)",
                         name='cuboid',
                         color='xkcd'
                     )
@@ -144,7 +174,7 @@ class SynteticWorld:
             models['box'] = self.n_cubes
 
         if self.n_cylinders is not None and self.n_cylinders > 0:
-            world_generator.add_asset(
+            self.world_generator.add_asset(
                 tag='cylinder',
                 description=dict(
                     type='cylinder',
@@ -159,7 +189,7 @@ class SynteticWorld:
             models['cylinder'] = self.n_cylinders
 
         if self.n_spheres is not None and self.n_spheres > 0:
-            world_generator.add_asset(
+            self.world_generator.add_asset(
                 tag='sphere',
                 description=dict(
                     type='sphere',
@@ -205,7 +235,7 @@ class SynteticWorld:
 
         # Place objects randomly on the free
         # space within the walls
-        world_generator.add_engine(
+        self.world_generator.add_engine(
             tag='placement_engine',
             engine_name='random_pose',
             models=list(models.keys()),
@@ -217,17 +247,17 @@ class SynteticWorld:
             constraints=local_constraints
         )
 
-        # # Run placement engine
-        # world_generator.run_engines(attach_models=True)
-        world_generator.world.name = self.world_name
-        # if preview:
-        world_generator.world.show()
+        # Run placement engine
+        self.world_generator.run_engines(attach_models=True)
+        self.world_generator.world.name = self.world_name
+        if show:
+            self.world_generator.world.show()
 
         add_custom_gazebo_resource_path(self.export_models_dir)
 
         # Export world to file and walls model as Gazebo model
-        full_world_filename = world_generator.export_world(
+        full_world_filename = self.world_generator.export_world(
             output_dir=self.export_world_dir,
-            filename=world_generator.world.name + '.world',
+            filename=self.world_generator.world.name + '.world',
             models_output_dir=self.export_models_dir,
             overwrite=True)

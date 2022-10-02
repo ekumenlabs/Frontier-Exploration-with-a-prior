@@ -12,3 +12,4 @@ pcg-gazebo
 dash
 markupsafe==2.0.1
 rasterio
+typer
