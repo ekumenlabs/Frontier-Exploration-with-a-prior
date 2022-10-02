@@ -113,7 +113,7 @@ TebLocalPlannerROS:
 
   shrink_horizon_backup: True
   shrink_horizon_min_duration: 10
-  oscillation_recovery: True
+  oscillation_recovery: False
   oscillation_v_eps: 0.1
   oscillation_omega_eps: 0.1
   oscillation_recovery_min_duration: 10

@@ -14,7 +14,7 @@ planners:
 GlobalPlanner:
   # Specifies whether or not to allow the planner to create plans that
   # traverse unknown space
-  allow_unknown: false
+  allow_unknown: true
 
   # Tolerance on the goal point for the planner. The planner will attempt
   # to create a plan that is as close to the specified goal as possible
