@@ -13,7 +13,7 @@ from math import isclose
 
 import rospy
 
-START_POS = (8, 27) # [m] in blueprints frame
+START_POS = (25, 5) # [m] in blueprints frame
 
 class VisibilityServer(object):
     """
@@ -119,13 +119,13 @@ if __name__ == '__main__':
     rospy.init_node('VisibilityServer', anonymous=False, log_level=rospy.DEBUG)
     # TODO expose parameters via parameter server
 
-    file_dir = f"{BASE_FILES_DIR}/small_house_clean.dxf"
+    file_dir = f"{BASE_FILES_DIR}/small_house_polygon_clean.dxf"
     layout = gpd.read_file(file_dir)
 
     bounds = layout.unary_union.bounds
     tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
 
-    layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.3)
+    layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.2)
     visibility_grid = VisibilityGrid(layout=layout, square_size=0.05)
     try:
         visibility_server = VisibilityServer(grid=visibility_grid)

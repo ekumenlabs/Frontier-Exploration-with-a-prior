@@ -22,7 +22,7 @@
   <!-- Spawn URDF into Gazebo -->
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
         args="-param robot_description -urdf -model $(arg ns)
-              -x $(arg pose_x) -y $(arg pose_y) -z 0.45 -Y $(arg pose_Y)"/>
+              -x 25 -y 5 -z 0.45 -Y $(arg pose_Y)"/>
 
   <!-- Running Gazebo (non-nodelet) version of depthimage_to_laserscan for 3D cameras -->
   <include file="$(find ca_slam)/launch/depthimage_to_laserscan_gazebo.launch">
