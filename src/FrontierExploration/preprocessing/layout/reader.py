@@ -29,16 +29,23 @@ class LayoutReader:
         self.files_dir = files_dir
         self.file_name = file_name
         self.file_extension = file_extension
+        self._layout = None
         self.world_generator = WorldGenerator()
-        self.layout = gpd.read_file(f"{files_dir}{file_name}.{file_extension}")
-        # self.layout["geometry"] = self.layout["geometry"].apply(lambda x: x.buffer(0.3)) # buffer 30cm.
-        bounds = self.layout.unary_union.bounds
-        tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
 
-        self.layout["geometry"] = self.layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero))
-        # self.layout.geometry = shapely.affinity.affine_transform(self.layout.unary_union, tf_to_zero)
-        print("here")
-    
+
+    @property
+    def layout(self):
+        if self._layout is None:
+            layout = gpd.read_file(f"{self.files_dir}{self.file_name}.{self.file_extension}")
+            # self.layout["geometry"] = self.layout["geometry"].apply(lambda x: x.buffer(0.3)) # buffer 30cm.
+            bounds = layout.unary_union.bounds
+            tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
+
+            layout["geometry"] = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero))
+            # layout.geometry = shapely.affinity.affine_transform(layout.unary_union, tf_to_zero)
+            self._layout = layout
+        return self._layout
+
     def create_gazebo_model(
         self,
         output_file_dir: str,
