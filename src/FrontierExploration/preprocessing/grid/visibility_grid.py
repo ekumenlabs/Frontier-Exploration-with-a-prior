@@ -39,7 +39,6 @@ class VisibilityGrid():
             to_plot.plot(column="status")
         else:
             self._occupancy_df.plot(column="status")
-        # plt.imshow(self._layout_image)
 
 def main() -> None:
     files_dir = f"/home/ramiro/Frontier-Exploration-with-a-prior/Notebooks/files"

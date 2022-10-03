@@ -1,8 +1,12 @@
 <launch>
+  <arg name="start_x" default="0"/>
+  <arg name="start_y" default="0"/>
   <node pkg="visibility_server" type="robot_position_2d.py" name="robot_position_2d" output="screen">
       <param name="/use_sim_time" value="true"/>
   </node>
   <node pkg="visibility_server" type="visibility_server_node.py" name="visibility_server" output="screen">
       <param name="/use_sim_time" value="true"/>
+      <param name="start_x" value="$(arg start_x)"/>
+      <param name="start_y" value="$(arg start_y)"/>
   </node>
 </launch>

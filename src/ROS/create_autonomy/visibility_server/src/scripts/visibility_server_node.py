@@ -1,4 +1,5 @@
 #!/usr/bin/python3.8
+from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Lock
 import geopandas as gpd
@@ -13,7 +14,10 @@ from math import isclose
 
 import rospy
 
-START_POS = (25, 5) # [m] in blueprints frame
+@dataclass(frozen=True)
+class StartPosition:
+    x: float
+    y: float
 
 class VisibilityServer(object):
     """
@@ -21,31 +25,21 @@ class VisibilityServer(object):
     """
     OCCUPIED_THRESHOLD = 65 # [%]
     RADIUS_OF_INTEREST = 10 # [m]
-    def __init__(self, grid: VisibilityGrid):
+    def __init__(self, grid: VisibilityGrid, start_pos: StartPosition):
         self._lock = Lock()
         self._grid = grid
-        self._robot_pose = None
+        self._start_position = start_pos
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
         self._plotter = LivePlotter(self._grid, self._lock)
-
-
-    def _subsample_data(self, data: np.ndarray, origin_x: float, origin_y:float, resolution:float, cells_to_keep:int) -> np.ndarray:
-        robot_position_in_cells_x = int((self._robot_pose.x - origin_x) / resolution)
-        robot_position_in_cells_y = int((self._robot_pose.y - origin_y) / resolution)
-        lower_cell_bound_x = max(0, robot_position_in_cells_x - cells_to_keep)
-        lower_cell_bound_y = max(0, robot_position_in_cells_y - cells_to_keep)
-        upper_cell_bound_x = min(data.shape[0], robot_position_in_cells_x + cells_to_keep)
-        upper_cell_bound_y = min(data.shape[1], robot_position_in_cells_y + cells_to_keep)
-        return data[lower_cell_bound_x:upper_cell_bound_x][lower_cell_bound_y:upper_cell_bound_y]
 
 
     def _occupancy_grid_cb(self, msg: OccupancyGrid) -> None:
         metadata = msg.info
         origin = metadata.origin
         origin_translation = np.array([origin.position.x, origin.position.y, origin.position.z])
-        origin_x = origin_translation[0] + START_POS[0]
-        origin_y = origin_translation[1] + START_POS[1]
+        origin_x = origin_translation[0] + self._start_position.x
+        origin_y = origin_translation[1] + self._start_position.y
         height = metadata.height
         width = metadata.width
         data = np.asarray(msg.data, np.int8).reshape(height, width)
@@ -69,11 +63,8 @@ class VisibilityServer(object):
         
         width = min(width, img_width)
         height = min(height, img_height)
-        print(self._grid._layout_image.shape)
-        print(width, height)
 
         data = data[:width, :height]
-        print(data.shape)
         data[data> 0.65] = OCCUPIED
         data[np.logical_and(data<= 0.65, data!=UNKNOWN)] = 0
         data[data == UNKNOWN] = 1
@@ -97,7 +88,7 @@ class VisibilityServer(object):
         """
         response = VisibilityResponse()
         with self._lock:
-            response.visibility =  int(self._grid.visibility(req.x_map_frame + START_POS[0], req.y_map_frame + START_POS[1]))
+            response.visibility =  int(self._grid.visibility(req.x_map_frame + self._start_position.x, req.y_map_frame + self._start_position.y))
         return response
 
     def run(self):
@@ -125,10 +116,15 @@ if __name__ == '__main__':
     bounds = layout.unary_union.bounds
     tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
 
+    start_pos_x = float(rospy.get_param("~start_x"))
+    start_pos_y = float(rospy.get_param("~start_y"))
+
+    start_pos = StartPosition(x=start_pos_x, y=start_pos_y)
+
     layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.2)
     visibility_grid = VisibilityGrid(layout=layout, square_size=0.05)
     try:
-        visibility_server = VisibilityServer(grid=visibility_grid)
+        visibility_server = VisibilityServer(grid=visibility_grid, start_pos=start_pos)
         visibility_server.run()
     except rospy.ROSInterruptException:
         visibility_server.stop()
