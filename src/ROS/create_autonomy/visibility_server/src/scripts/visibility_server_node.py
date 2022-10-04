@@ -1,7 +1,7 @@
 #!/usr/bin/python3.8
 from dataclasses import dataclass
 from datetime import datetime
-from multiprocessing import Lock
+from multiprocessing import Event, Lock, Process
 import geopandas as gpd
 from FrontierExploration.preprocessing.grid.raycasting import SEEN, OCCUPIED, UNKNOWN
 from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
@@ -11,6 +11,7 @@ from visibility_server.srv import Visibility, VisibilityRequest, VisibilityRespo
 import numpy as np
 import shapely
 from math import isclose
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, TimeoutError
 
 import rospy
 
@@ -87,8 +88,17 @@ class VisibilityServer(object):
         returns visibility of the cell corresponding to the given position in the map frame
         """
         response = VisibilityResponse()
-        with self._lock:
-            response.visibility =  int(self._grid.visibility(req.x_map_frame + self._start_position.x, req.y_map_frame + self._start_position.y))
+        stop_visibility_evt = Event()
+        with ThreadPoolExecutor(1) as pool:
+            with self._lock:
+                p = pool.submit(self._grid.visibility,x=req.x_map_frame + self._start_position.x, y=req.y_map_frame + self._start_position.y, stop_event=stop_visibility_evt)
+                try:
+                    visibility = int(p.result(timeout=0.5))
+                except TimeoutError:
+                    rospy.logwarn("Timedout getting visibility, returning 0.")
+                    stop_visibility_evt.set()
+                    visibility=0
+        response.visibility = visibility
         return response
 
     def run(self):

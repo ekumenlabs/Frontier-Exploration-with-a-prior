@@ -1,3 +1,4 @@
+from multiprocessing import Event
 from FrontierExploration.preprocessing.grid.raycasting import RayCast, OCCUPIED, UNKNOWN
 import geopandas as gpd
 import numpy as np
@@ -27,9 +28,9 @@ class VisibilityGrid():
         self._occupancy_df = gpd.GeoDataFrame({"geometry":geometries, "status": values})
 
     
-    def visibility(self, x: float, y: float) -> float:
+    def visibility(self, x: float, y: float, stop_event: Event) -> float:
         raycast = RayCast(16, 12 / self._square_size, x / self._square_size ,y / self._square_size )
-        raycast.run_on_df(self._occupancy_df)
+        raycast.run_on_df(self._occupancy_df, stop_event=stop_event)
         self._last_raycast = raycast
         return raycast.visibility_percentage
 

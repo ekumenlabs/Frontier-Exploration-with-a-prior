@@ -1,4 +1,5 @@
 from math import sqrt
+from multiprocessing import Event
 from typing import Optional
 from enum import Enum
 import numpy as np
@@ -82,11 +83,15 @@ class RayCast:
         self.raycast_df = gpd.GeoDataFrame(geometry=[LineString([(start_x, start_y), movement]) for movement in self.directions])
         self.raycast_df["status"] = BlockStatus.Raycasted.value
 
-    def run_on_df(self, layout_df: gpd.GeoDataFrame):
-        for index in tqdm(layout_df[layout_df["status"] == BlockStatus.Occupied.value].index):
+    def run_on_df(self, layout_df: gpd.GeoDataFrame, stop_event: Optional[Event] = None):
+        for index in layout_df[layout_df["status"] == BlockStatus.Occupied.value].index:
+            if stop_event is not None and stop_event.is_set():
+                return
             self.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
 
-        for index in tqdm(layout_df[layout_df["status"] == BlockStatus.Seen.value].index):
+        for index in layout_df[layout_df["status"] == BlockStatus.Seen.value].index:
+            if stop_event is not None and stop_event.is_set():
+                return
             self.intersect_with_polygon(layout_df['geometry'][index], BlockStatus.Seen.value)
         
             
