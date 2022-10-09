@@ -1,4 +1,6 @@
+import random
 from typing import Optional
+from shapely.geometry import LineString, Point
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
 from pcg_gazebo.generators.creators import extrude
@@ -13,8 +15,8 @@ class SynteticWorld:
         name: str,
         output_dir: str,
         n_rectangles: int,
-        n_in_rectangles: int,
-        n_points: int,
+        n_in_rectangles: int = None,
+        n_points: int = None,
         x_room_range: int = 50,
         y_room_range: int = 50,
         wall_thickness: float = 0.1,
@@ -31,6 +33,7 @@ class SynteticWorld:
         self.export_models_dir = f"{output_dir}/models"
         self.export_world_dir = f"{output_dir}/worlds"
         self.wall_polygon = self.create_polygon()
+        self._starting_point = None
         # Create a world generator to place
         # objects in the world
         self.world_generator = WorldGenerator()
@@ -76,24 +79,27 @@ class SynteticWorld:
             raise ValueError(
                 'No number of rectangles and no number of points for'
                 ' triangulation were provided')
-        if self.n_internal_rectangles is not None:
-            if self.n_internal_rectangles > 1:
-                internal_polygon = random_rectangles(
-                        n_rect=self.n_internal_rectangles,
-                        x_center_min=-self.x_room_range / 2.,
-                        x_center_max=self.x_room_range / 2.,
-                        y_center_min=-self.y_room_range / 2.,
-                        y_center_max=self.y_room_range / 2.,
-                        delta_x_min=self.x_room_range / 4.,
-                        delta_x_max=self.x_room_range / 2,
-                        delta_y_min=self.y_room_range / 4.,
-                        delta_y_max=self.y_room_range / 2)
-            elif self.n_internal_rectangles == 1:
-                internal_polygon = random_rectangle(
-                        delta_x_min=self.x_room_range / 4.,
-                        delta_x_max=self.x_room_range / 2,
-                        delta_y_min=self.y_room_range / 4.,
-                        delta_y_max=self.y_room_range / 2)
+        if self.n_internal_rectangles is not None and self.n_internal_rectangles > 0:
+            internal_polygon = None
+            while(internal_polygon is None or wall_polygon.contains(internal_polygon)):
+                if self.n_internal_rectangles > 1:
+                    internal_polygon = random_rectangles(
+                            n_rect=self.n_internal_rectangles,
+                            x_center_min=-self.x_room_range / 2.,
+                            x_center_max=self.x_room_range / 2.,
+                            y_center_min=-self.y_room_range / 2.,
+                            y_center_max=self.y_room_range / 2.,
+                            delta_x_min=self.x_room_range / 4.,
+                            delta_x_max=self.x_room_range / 2,
+                            delta_y_min=self.y_room_range / 4.,
+                            delta_y_max=self.y_room_range / 2)
+                elif self.n_internal_rectangles == 1:
+                    internal_polygon = random_rectangle(
+                            delta_x_min=self.x_room_range / 4.,
+                            delta_x_max=self.x_room_range / 2,
+                            delta_y_min=self.y_room_range / 4.,
+                            delta_y_max=self.y_room_range / 2)
+            
             wall_polygon = wall_polygon.difference(internal_polygon)
         return wall_polygon
     
@@ -249,6 +255,9 @@ class SynteticWorld:
 
         # Run placement engine
         self.world_generator.run_engines(attach_models=True)
+        self.free_space_polygon = self.world_generator.world.get_free_space_polygon(
+            ground_plane_models=self.world_generator.world.models.keys(),
+            ignore_models=['ground_plane'])
         self.world_generator.world.name = self.world_name
         if show:
             self.world_generator.world.show()
@@ -261,3 +270,28 @@ class SynteticWorld:
             filename=self.world_generator.world.name + '.world',
             models_output_dir=self.export_models_dir,
             overwrite=True)
+
+    @property
+    def total_area(self):
+        return self.free_space_polygon.area
+    
+    @property
+    def starting_point(self):
+        if self._starting_point is None:
+            self._starting_point = self.get_starting_point()
+        return self._starting_point
+
+    def get_border(self, interior: int, exterior: int):
+        polygon = self.free_space_polygon
+        polygon.exterior.coords
+        bound_in = LineString(polygon.exterior.coords).buffer(interior)
+        bound_ext = LineString(polygon.exterior.coords).buffer(exterior)
+        return bound_ext.intersection(polygon).difference(bound_in)
+
+    def get_starting_point(self, interior: int = 2, exterior: int = 5):
+        border = self.get_border(interior, exterior)
+        minx, miny, maxx, maxy = border.bounds
+        pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+        while not border.contains(pnt):
+            pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+        return pnt

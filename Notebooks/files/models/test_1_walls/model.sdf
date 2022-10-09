@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <model name="test_1_walls">
+    <pose frame="">0 0 2.5 0 -0 0</pose>
+    <static>1</static>
+    <self_collide>0</self_collide>
+    <allow_auto_disable>0</allow_auto_disable>
+    <link name="mesh">
+      <kinematic>0</kinematic>
+      <gravity>1</gravity>
+      <self_collide>0</self_collide>
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>file:///home/agusmazzeo/Documents/UTN/Proyecto/Frontier-Exploration-with-a-prior/Notebooks/files/models/test_1_walls/meshes/fiItfiqicw.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <pose frame="">4.6407 -5.06212 -2.5 0 -0 0</pose>
+        <max_contacts>20</max_contacts>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>file:///home/agusmazzeo/Documents/UTN/Proyecto/Frontier-Exploration-with-a-prior/Notebooks/files/models/test_1_walls/meshes/GUMoRWRNUq.stl</uri>
+            <scale>1 1 1</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.596078 0.964706 0.690196 1</ambient>
+          <diffuse>0.596078431372549 0.9647058823529412 0.6901960784313725 1</diffuse>
+        </material>
+        <pose frame="">4.6407 -5.06212 -2.5 0 -0 0</pose>
+        <cast_shadows>1</cast_shadows>
+        <transparency>0.0</transparency>
+      </visual>
+      <pose frame="">0 0 0 0 -0 0</pose>
+    </link>
+  </model>
+</sdf>
