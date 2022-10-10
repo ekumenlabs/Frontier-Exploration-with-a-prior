@@ -87,6 +87,7 @@ class VisibilityServer(object):
         """
         returns visibility of the cell corresponding to the given position in the map frame
         """
+        start = datetime.now()
         response = VisibilityResponse()
         stop_visibility_evt = Event()
         with ThreadPoolExecutor(1) as pool:
@@ -99,6 +100,7 @@ class VisibilityServer(object):
                     stop_visibility_evt.set()
                     visibility=0
         response.visibility = visibility
+        print(f"Took {datetime.now() - start} to compute visibility")
         return response
 
     def run(self):

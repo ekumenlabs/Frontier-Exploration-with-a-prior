@@ -19,13 +19,14 @@ class VisibilityGrid():
         self._last_raycast = None
 
     def update_layout(self) -> None:
-        shapess = shapes(self._layout_image)
+        shapess = shapes(self._layout_image, connectivity=8)
         geometries = []
         values = []
         for shapedict, value in shapess:
             geometries.append(shape(shapedict))
             values.append(value)
         self._occupancy_df = gpd.GeoDataFrame({"geometry":geometries, "status": values})
+        self._occupancy_df["geometry"] = self._occupancy_df.simplify(tolerance=0.3, preserve_topology=True)
 
     
     def visibility(self, x: float, y: float, stop_event: Event) -> float:

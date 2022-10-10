@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import rospy
-from tf import TransformListener
-from geometry_msgs.msg import Point
+from tf import TransformListener, TransformBroadcaster
+from nav_msgs.msg import Odometry
 
 class RobotPosition2d():
     """
@@ -14,25 +14,22 @@ class RobotPosition2d():
     def __init__(self):
         self._tf_listener = TransformListener()
         self._rate = rospy.Rate(self.RATE)
-        self._robot_position_pub = rospy.Publisher("robot_position_2d", Point, queue_size=10)
+        self._tf_broadcaster = TransformBroadcaster(queue_size=2)
+        self._robot_position_pub = rospy.Subscriber("/create1/gts", Odometry, self._odom_cb)
 
-    def get_robot_position(self):
+    def _odom_cb(self
+    , gts #type: Odometry
+    ):
         now = rospy.Time.now()
-        try:
-            self._tf_listener.waitForTransform("/map", "/create1/base_link", now, rospy.Duration(secs=4))
-        except:
-            return
-        trans, _ = self._tf_listener.lookupTransform(self.TARGET_FRAME, self.SOURCE_FRAME, now)
-        ret = Point()
-        ret.x = trans[0]
-        ret.y = trans[1]
-        return ret
+        trans = gts.pose.pose.position
+        trans =(trans.x, trans.y, trans.z)
+
+        ori = gts.pose.pose.orientation
+        ori = (ori.x, ori.y, ori.z, ori.w)
+        self._tf_broadcaster.sendTransform(trans, ori, now, "create1/base_link","gts")
 
     def run(self):
         while not rospy.is_shutdown():
-            maybe_robot_position = self.get_robot_position()
-            if maybe_robot_position is not None:
-                self._robot_position_pub.publish(maybe_robot_position)
             self._rate.sleep()
 
     

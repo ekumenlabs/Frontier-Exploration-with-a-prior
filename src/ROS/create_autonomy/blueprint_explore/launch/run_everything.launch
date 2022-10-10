@@ -25,7 +25,7 @@
 
   <!-- Spawn robot/s -->
   <include file="$(find ca_gazebo)/launch/include/spawn_multirobot.launch">
-    <arg name="env" value="$(arg env)"/>
+    <arg name="env" value="empty"/>
     <arg name="pose1_x" default="$(arg pose1_x)"/>
     <arg name="pose1_y" default="$(arg pose1_y)"/>
     <arg name="pose1_Y" default="$(arg pose1_Y)"/>

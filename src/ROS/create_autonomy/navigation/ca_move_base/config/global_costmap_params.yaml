@@ -9,9 +9,9 @@ global_costmap:
   publish_voxel_map: true
 
   # Map management parameters
-  width: 5000
-  height: 5000
-  resolution: 0.01
+  width: 50
+  height: 50
+  resolution: 0.05
 
   static_layer:
     map_topic: "/map"
