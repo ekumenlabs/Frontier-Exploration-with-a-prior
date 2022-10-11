@@ -18,12 +18,14 @@ using costmap_2d::FREE_SPACE;
 FrontierSearch::FrontierSearch(costmap_2d::Costmap2D* costmap,
                                double potential_scale, double gain_scale,
                                double min_frontier_size,
-                               const ros::ServiceClient& visibility_client)
+                               const ros::ServiceClient& visibility_client,
+                               const bool use_visibility)
   : costmap_(costmap)
   , potential_scale_(potential_scale)
   , gain_scale_(gain_scale)
   , min_frontier_size_(min_frontier_size)
   , visibility_client_(visibility_client)
+  , use_visibility_(use_visibility)
 {
 }
 
@@ -87,8 +89,16 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
   }
 
   // set costs of frontiers
-  for (auto& frontier : frontier_list) {
-    frontier.cost = frontierVisibilityCost(frontier);
+  if(use_visibility_){
+    for (auto& frontier : frontier_list) {
+      frontier.cost = frontierVisibilityCost(frontier);
+    }
+  }
+  else{
+    for (auto& frontier : frontier_list) {
+      frontier.cost = frontierCost(frontier);
+    }
+
   }
   std::sort(
       frontier_list.begin(), frontier_list.end(),

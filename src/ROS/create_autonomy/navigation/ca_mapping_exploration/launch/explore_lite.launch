@@ -1,23 +1,14 @@
 <launch>
-  <arg name="exploration_type" default="$(env EXPLORATION_TYPE)" doc="Which exploration algorithm to use, either 'maryland' or 'utn'"/>
   <arg name="id" default="$(optenv ID 1)"  doc="Unique identifier of the robot [1-Inf.)"/>
   <arg name="ns" default="create$(arg id)" doc="Namespace of the robot. By default: create1."/>
+  <arg name="use_visibility" value="$(env VISIBILITY)" doc="Use visibility or not (UTN or maryland, respectively"/>
 
 
 
-  <group if="$(eval arg('exploration_type') == 'utn')">
-    <node pkg="blueprint_explore" type="explore" name="explore"
-          output="screen" respawn="false" ns="$(arg ns)">
-      <rosparam command="load" file="$(find ca_mapping_exploration)/config/explore_lite.yaml"/>
-      <param name="robot_base_frame" value="$(arg ns)/base_footprint"/>
-    </node>
-  </group>
-
-  <group if="$(eval arg('exploration_type') != 'utn')">
-    <node pkg="explore_lite" type="explore" name="explore"
-          output="screen" respawn="false" ns="$(arg ns)">
-      <rosparam command="load" file="$(find ca_mapping_exploration)/config/explore_lite.yaml"/>
-      <param name="robot_base_frame" value="$(arg ns)/base_footprint"/>
-    </node>
-  </group>
+  <node pkg="blueprint_explore" type="explore" name="explore"
+        output="screen" respawn="false" ns="$(arg ns)">
+    <rosparam command="load" file="$(find ca_mapping_exploration)/config/explore_lite.yaml"/>
+    <param name="robot_base_frame" value="$(arg ns)/base_footprint"/>
+    <param name="use_visibility" value="$(arg use_visibility)"/>
+  </node>
 </launch>

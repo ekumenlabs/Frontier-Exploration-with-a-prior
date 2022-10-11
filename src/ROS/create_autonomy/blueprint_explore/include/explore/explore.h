@@ -88,6 +88,7 @@ private:
   ros::NodeHandle private_nh_;
   ros::NodeHandle relative_nh_;
   ros::Publisher marker_array_publisher_;
+  ros::Publisher finished_exploration_pub_;
   tf::TransformListener tf_listener_;
   ros::ServiceClient visibility_client_;
 

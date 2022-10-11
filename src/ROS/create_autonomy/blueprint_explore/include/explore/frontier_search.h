@@ -36,7 +36,7 @@ public:
    * @param costmap Reference to costmap data to search.
    */
   FrontierSearch(costmap_2d::Costmap2D* costmap, double potential_scale,
-                 double gain_scale, double min_frontier_size, const ros::ServiceClient& visibility_client);
+                 double gain_scale, double min_frontier_size, const ros::ServiceClient& visibility_client, const bool use_visibility);
 
   /**
    * @brief Runs search implementation, outward from the start position
@@ -95,6 +95,7 @@ private:
   unsigned int size_x_, size_y_;
   double potential_scale_, gain_scale_;
   double min_frontier_size_;
+  bool use_visibility_{false};
 };
 }
 #endif

@@ -39,6 +39,7 @@
 
 #include <thread>
 #include <visibility_server/Visibility.h>
+#include <std_msgs/Bool.h>
 
 inline static bool operator==(const geometry_msgs::Point& one,
                               const geometry_msgs::Point& two)
@@ -70,14 +71,18 @@ Explore::Explore()
   private_nh_.param("orientation_scale", orientation_scale_, 0.0);
   private_nh_.param("gain_scale", gain_scale_, 1.0);
   private_nh_.param("min_frontier_size", min_frontier_size, 0.5);
+  bool use_visibility{false};
+  private_nh_.param("use_visibility", use_visibility, false);
+  ROS_INFO_STREAM("Use visibility " << use_visibility);
 
   visibility_client_ = private_nh_.serviceClient<visibility_server::Visibility>("/visibility");
   visibility_client_.waitForExistence();
+  finished_exploration_pub_ = private_nh_.advertise<std_msgs::Bool>("exploration_finished", 10);
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
                                                  potential_scale_, gain_scale_,
                                                  min_frontier_size,
-                                                 visibility_client_);
+                                                 visibility_client_, use_visibility);
 
   if (visualize_) {
     marker_array_publisher_ =
@@ -193,10 +198,6 @@ void Explore::makePlan()
     ROS_DEBUG("frontier %zd cost: %f", i, frontiers[i].cost);
   }
 
-  if (frontiers.empty()) {
-    stop();
-    return;
-  }
 
   // publish frontiers as visualization markers
   if (visualize_) {
@@ -295,8 +296,12 @@ void Explore::stop()
 {
   move_base_client_.cancelAllGoals();
   exploring_timer_.stop();
+  std_msgs::Bool msg;
+  msg.data = true;
+
+  finished_exploration_pub_.publish(msg);
   ROS_INFO("Exploration stopped.");
-}
+  }
 
 }  // namespace explore
 
