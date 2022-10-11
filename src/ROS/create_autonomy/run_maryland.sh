@@ -1,2 +1,0 @@
-export LOCALIZATION=hector_mapping
-roslaunch ca_mapping_exploration explore_lite.launch
