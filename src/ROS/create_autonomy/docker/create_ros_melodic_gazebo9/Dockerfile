@@ -81,6 +81,7 @@ RUN rm ${DEPS_FILE}
 RUN python3.8 -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Exploration-with-a-prior.git@master 
 RUN apt-get install python3-catkin-pkg-modules -y
 RUN apt-get install python3-rospkg-modules -y
+RUN apt-get install psmisc -y
 RUN python3.8 -m pip install netifaces
 
 USER $USER

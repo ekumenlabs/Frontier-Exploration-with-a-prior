@@ -26,13 +26,13 @@ class VisibilityServer(object):
     """
     OCCUPIED_THRESHOLD = 65 # [%]
     RADIUS_OF_INTEREST = 10 # [m]
-    def __init__(self, grid: VisibilityGrid, start_pos: StartPosition):
+    def __init__(self, grid: VisibilityGrid, start_pos: StartPosition, plot: bool):
         self._lock = Lock()
         self._grid = grid
         self._start_position = start_pos
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
-        self._plotter = LivePlotter(self._grid, self._lock)
+        self._plotter = LivePlotter(self._grid, self._lock) if plot else None
 
 
     def _occupancy_grid_cb(self, msg: OccupancyGrid) -> None:
@@ -107,7 +107,8 @@ class VisibilityServer(object):
         """
         Main entrypoint for the visibility server node.
             """
-        self._plotter.run()
+        if self._plotter is not None:
+            self._plotter.run()
         while not rospy.is_shutdown():
             rospy.sleep(1)
     def stop(self):
@@ -130,13 +131,15 @@ if __name__ == '__main__':
 
     start_pos_x = float(rospy.get_param("~start_x"))
     start_pos_y = float(rospy.get_param("~start_y"))
+    plot = rospy.get_param("~plot")
+    print(plot)
 
     start_pos = StartPosition(x=start_pos_x, y=start_pos_y)
 
     layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.2)
     visibility_grid = VisibilityGrid(layout=layout, square_size=0.05)
     try:
-        visibility_server = VisibilityServer(grid=visibility_grid, start_pos=start_pos)
+        visibility_server = VisibilityServer(grid=visibility_grid, start_pos=start_pos, plot=plot)
         visibility_server.run()
     except rospy.ROSInterruptException:
         visibility_server.stop()
