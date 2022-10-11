@@ -11,7 +11,8 @@ fi
 cd /create_ws && catkin_make
 source devel/setup.bash
 export LOCALIZATION=slam
-export RVIZ=true
+export RVIZ=false
+export GUI=false
 export LASER=rplidar
 export EXPLORATION_TYPE=utn
 export START_X=$1
