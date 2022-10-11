@@ -7,6 +7,7 @@ from pcg_gazebo.generators.creators import extrude
 from pcg_gazebo.generators.shapes import random_rectangles, \
     random_rectangle, random_points_to_triangulation
 from pcg_gazebo.generators import WorldGenerator
+from shapely.affinity import affine_transform
 
 
 class SynteticWorld:
@@ -101,6 +102,11 @@ class SynteticWorld:
                             delta_y_max=self.y_room_range / 2)
             
             wall_polygon = wall_polygon.difference(internal_polygon)
+        
+
+        bounds = wall_polygon.bounds
+        tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
+        wall_polygon = affine_transform(wall_polygon, tf_to_zero)
         return wall_polygon
     
     def create_world(

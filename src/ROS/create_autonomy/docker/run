@@ -40,6 +40,7 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}/Frontier-Exploration-with-a-prior:/{WS_NAME}/Frontier-Exploration-with-a-prior")
     docker_args.append(f"--volume {temp_volume}/ws/build/:/{WS_NAME}/build/")
     docker_args.append(f"--volume {temp_volume}/ws/devel/:/{WS_NAME}/devel/")
+    docker_args.append(f"--volume $HOME/utn_worlds/:{docker_home}/utn_worlds/")
     # VSCode needs HOME to be defined in order to work in the container
     docker_args.append(f"-e HOME={docker_home}")
 
