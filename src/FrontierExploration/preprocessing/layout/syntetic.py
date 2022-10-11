@@ -1,6 +1,6 @@
 import random
 from typing import Optional
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString, Point, box as Box
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
 from pcg_gazebo.generators.creators import extrude
@@ -119,11 +119,12 @@ class SynteticWorld:
 
         # Create the wall model based on the extruded
         # boundaries of the polygon
+        box = Box(*self.wall_polygon.bounds)
         walls_model = extrude(
             polygon=self.wall_polygon,
             thickness=self.wall_thickness,
             height=self.wall_height,
-            pose=[0, 0, self.wall_height / 2., 0, 0, 0],
+            pose=[box.centroid.x, box.centroid.y, self.wall_height / 2., 0, 0, 0],
             extrude_boundaries=True,
             color='xkcd')
         walls_model.name = self.world_name + '_walls'
@@ -134,9 +135,9 @@ class SynteticWorld:
         self.world_generator.world.add_model(
             tag=walls_model.name,
             model=walls_model)
-        self.world_generator.world.add_model(
-            tag='ground_plane',
-            model=SimulationModel.from_gazebo_model('ground_plane'))
+        # self.world_generator.world.add_model(
+        #     tag='ground_plane',
+        #     model=SimulationModel.from_gazebo_model('ground_plane'))
 
         # Retrieve the free space polygon where objects
         # can be placed within the walls

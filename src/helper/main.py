@@ -91,7 +91,10 @@ def create_random(
             wall_height=wall_height
         )
         world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
-        worlds[file] = world
+        worlds[file] = {
+                    "world":world,
+                    "world_dir":f"{output_file_dir}worlds/{file}.world"
+                }
     elif n_worlds > 1:
         print("Starting multiple random world creation...")
         create_and_save_partial = partial(
@@ -117,7 +120,7 @@ def create_random(
                     "world":world,
                     "world_dir":f"{output_file_dir}worlds/{name}.world"
                 }
-        save_worlds_df(worlds, output_file_dir=output_file_dir)
+    save_worlds_df(worlds, output_file_dir=output_file_dir)
 
 if __name__ == "__main__":
     app()
