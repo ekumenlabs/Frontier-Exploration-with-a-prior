@@ -1,10 +1,15 @@
 #!./venv/bin/python3
+from curses.textpad import rectangle
 import typer
+from functools import partial
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from typing import Optional, List
+from tqdm import tqdm
 
 from FrontierExploration.preprocessing.layout.reader import LayoutReader
 from FrontierExploration.preprocessing.layout.syntetic import SynteticWorld
+from helper.utils import create_and_save, save_worlds_df
 
 app = typer.Typer(help="Hi Im the Frontier Exploration Scripting Helper!")
 
@@ -67,24 +72,52 @@ def create_random(
     wall_height: Optional[float] = typer.Option(
         help="Walls height.", default=5),
     cubes:  Optional[int] = typer.Option(
-        help="Random cubes to add inside world.", default=None),
+        help="Random cubes to add inside world.", default=0),
     cube_size:  Optional[float] = typer.Option(
-        help="Random cubes max size.", default=None),
+        help="Random cubes max size.", default=10),
+    n_worlds: Optional[int] = typer.Option(
+        help="Amount of worlds to create.", default=1)
 ):
-    print("Starting random world creation...")
-    syntetic_world = SynteticWorld(
-        name=file,
-        output_dir=output_file_dir,
-        n_rectangles=rectangles,
-        n_in_rectangles=interior_rectangles,
-        n_points=points,
-        x_room_range=x_range,
-        y_room_range=y_range,
-        wall_thickness=wall_thickness,
-        wall_height=wall_height
-    )
-    syntetic_world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
-
+    worlds = {}
+    if n_worlds == 1:
+        print("Starting single random world creation...")
+        world = SynteticWorld(
+            file,
+            output_file_dir,
+            n_rectangles=rectangles,
+            x_room_range=x_range,
+            y_room_range=y_range,
+            wall_thickness=wall_thickness,
+            wall_height=wall_height
+        )
+        world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
+        worlds[file] = world
+    elif n_worlds > 1:
+        print("Starting multiple random world creation...")
+        create_and_save_partial = partial(
+            create_and_save,
+            file=file,
+            output_file_dir=output_file_dir,
+            rectangles=rectangles,
+            x_range=x_range,
+            y_range=y_range,
+            wall_thickness=wall_thickness,
+            wall_height=wall_height,
+            cubes=cubes,
+            cube_size=cube_size,
+            show=show
+        )
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            ids = [id for id in range(n_worlds)]
+            futures = [executor.submit(create_and_save_partial, id=id) for id in ids]
+            for future in as_completed(futures):
+                name, world = future.result()
+                print(f"Created world {name}")
+                worlds[name] = {
+                    "world":world,
+                    "world_dir":f"{output_file_dir}worlds/{name}.world"
+                }
+        save_worlds_df(worlds, output_file_dir=output_file_dir)
 
 if __name__ == "__main__":
     app()
