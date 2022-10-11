@@ -14,7 +14,6 @@ export LOCALIZATION=slam
 export RVIZ=false
 export GUI=false
 export LASER=rplidar
-export EXPLORATION_TYPE=utn
 export START_X=$1
 export START_Y=$2
 export WORLD_NAME=/home/create/.gazebo/worlds/$3.world

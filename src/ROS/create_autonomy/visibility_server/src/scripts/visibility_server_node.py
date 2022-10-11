@@ -112,7 +112,8 @@ class VisibilityServer(object):
         while not rospy.is_shutdown():
             rospy.sleep(1)
     def stop(self):
-        self._plotter.stop()
+        if self._plotter is not None:
+            self._plotter.stop()
         self._plotter = None
 
 
@@ -132,7 +133,6 @@ if __name__ == '__main__':
     start_pos_x = float(rospy.get_param("~start_x"))
     start_pos_y = float(rospy.get_param("~start_y"))
     plot = rospy.get_param("~plot")
-    print(plot)
 
     start_pos = StartPosition(x=start_pos_x, y=start_pos_y)
 
