@@ -1,6 +1,6 @@
 import random
 from typing import Optional
-from shapely.geometry import LineString, Point, box as Box
+from shapely.geometry import LineString, Point, box as Box, Polygon
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
 from pcg_gazebo.generators.creators import extrude
@@ -81,32 +81,27 @@ class SynteticWorld:
                 'No number of rectangles and no number of points for'
                 ' triangulation were provided')
         if self.n_internal_rectangles is not None and self.n_internal_rectangles > 0:
-            internal_polygon = None
-            while(internal_polygon is None or wall_polygon.contains(internal_polygon)):
-                if self.n_internal_rectangles > 1:
-                    internal_polygon = random_rectangles(
-                            n_rect=self.n_internal_rectangles,
-                            x_center_min=-self.x_room_range / 2.,
-                            x_center_max=self.x_room_range / 2.,
-                            y_center_min=-self.y_room_range / 2.,
-                            y_center_max=self.y_room_range / 2.,
-                            delta_x_min=self.x_room_range / 4.,
-                            delta_x_max=self.x_room_range / 2,
-                            delta_y_min=self.y_room_range / 4.,
-                            delta_y_max=self.y_room_range / 2)
-                elif self.n_internal_rectangles == 1:
-                    internal_polygon = random_rectangle(
-                            delta_x_min=self.x_room_range / 4.,
-                            delta_x_max=self.x_room_range / 2,
-                            delta_y_min=self.y_room_range / 4.,
-                            delta_y_max=self.y_room_range / 2)
-            
-            wall_polygon = wall_polygon.difference(internal_polygon)
-        
+            min_x, min_y, max_x, max_y = wall_polygon.bounds
+            width = max_x - min_x
+            height = max_y - min_y
+            for _ in range(self.n_internal_rectangles):
+                internal_polygon = None
+                while internal_polygon is None or not wall_polygon.intersects(internal_polygon):
+                    rand_x = random.uniform(min_x, max_x)
+                    rand_y = random.uniform(min_y, max_y)
 
-        bounds = wall_polygon.bounds
-        tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
+                    left = Point([rand_x, rand_y])
+                    bottom = Point([rand_x, rand_y - height])
+                    right = Point([rand_x + width, rand_y - height])
+                    top = Point([rand_x + width, rand_y])
+
+                    internal_polygon = Polygon([left, bottom, right, top])
+                    
+                wall_polygon = wall_polygon.difference(internal_polygon)
+
+        tf_to_zero = [1, 0, 0, 1, -wall_polygon.bounds[0], -wall_polygon.bounds[1]]
         wall_polygon = affine_transform(wall_polygon, tf_to_zero)
+        
         return wall_polygon
     
     def create_world(
@@ -119,12 +114,12 @@ class SynteticWorld:
 
         # Create the wall model based on the extruded
         # boundaries of the polygon
-        box = Box(*self.wall_polygon.bounds)
+        centroid = Box(*self.wall_polygon.bounds).centroid
         walls_model = extrude(
             polygon=self.wall_polygon,
             thickness=self.wall_thickness,
             height=self.wall_height,
-            pose=[box.centroid.x, box.centroid.y, self.wall_height / 2., 0, 0, 0],
+            pose=[centroid.x-self.wall_thickness, centroid.y-self.wall_thickness, self.wall_height / 2., 0, 0, 0],
             extrude_boundaries=True,
             color='xkcd')
         walls_model.name = self.world_name + '_walls'
@@ -135,9 +130,9 @@ class SynteticWorld:
         self.world_generator.world.add_model(
             tag=walls_model.name,
             model=walls_model)
-        # self.world_generator.world.add_model(
-        #     tag='ground_plane',
-        #     model=SimulationModel.from_gazebo_model('ground_plane'))
+        self.world_generator.world.add_model(
+            tag='ground_plane',
+            model=SimulationModel.from_gazebo_model('ground_plane'))
 
         # Retrieve the free space polygon where objects
         # can be placed within the walls
