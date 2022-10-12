@@ -21,7 +21,9 @@ export WORLD_NAME=/home/create/.gazebo/worlds/$3.world
 export POLYGON_PATH=/home/create/.gazebo/polygons/$3_polygon.pkl
 export VISIBILITY=$4
 export PLOT=true
+OUTPUTS_BASE_DIR=/create_ws/src/outputs
+OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3"
 
 echo "Running $WORLD_NAME, loading polygon from $POLYGON_PATH"
-roslaunch blueprint_explore run_everything.launch&
-rosbag record /map /create1/gts
+mkdir -p $OUTPUT_DIR && cd $OUTPUT_DIR && rosbag record /map /create1/gts&
+roslaunch blueprint_explore run_everything.launch
