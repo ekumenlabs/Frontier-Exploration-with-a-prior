@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from FrontierExploration.preprocessing.layout.reader import LayoutReader
 from FrontierExploration.preprocessing.layout.syntetic import SynteticWorld
-from helper.utils import create_and_save, save_worlds_df
+from helper.utils import DockerHandler, create_and_save, save_worlds_df
 
 app = typer.Typer(help="Hi Im the Frontier Exploration Scripting Helper!")
 
@@ -123,6 +123,15 @@ def create_random(
                     "world_dir":f"{output_file_dir}worlds/{name}.world"
                 }
     save_worlds_df(worlds, output_file_dir=output_file_dir)
+
+
+@app.command()
+def run_docker(
+    worlds_df_path: str = typer.Option(
+        help="Dataframe to use for Docker instance creations.", default="worlds_df.pkl")
+):
+    DockerHandler(worlds_df_path).run()
+
 
 if __name__ == "__main__":
     app()
