@@ -3,14 +3,14 @@ from FrontierExploration.preprocessing.grid.raycasting import RayCast, OCCUPIED,
 import geopandas as gpd
 import numpy as np
 from rasterio.features import shapes, rasterize
-from shapely.geometry import Polygon, MultiPolygon
+from shapely.geometry import Polygon
 from shapely.geometry import shape
 from shapely.affinity import affine_transform
 
 class VisibilityGrid():
     def __init__(self, layout: Polygon, square_size: float =0.05) -> None:
         self._square_size = square_size
-        layout = affine_transform(layout, [1.0/square_size, 0, 0, 1.0/square_size, 0, 0])
+        layout = affine_transform(geom=layout, matrix=[1.0/square_size, 0, 0, 1.0/square_size, 0, 0])
         bounds = layout.bounds
         img_size = (int(bounds[3] - bounds[1]) + int(1 / square_size), int(bounds[2] - bounds[0]) + int(1 / square_size))
         self._layout_image : np.ndarray  = rasterize([layout], out_shape=img_size, fill=UNKNOWN, default_value=OCCUPIED)

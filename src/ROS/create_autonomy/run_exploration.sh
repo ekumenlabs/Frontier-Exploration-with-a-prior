@@ -8,17 +8,20 @@ else
     echo "Starting to map with start_x: $1, start_y: $2, world: $3 , use_visibility: $4"
 fi
 
+cd /create_ws/Frontier-Exploration-with-a-prior && python3.8 -m pip install -e .
 cd /create_ws && catkin_make
 source devel/setup.bash
 export LOCALIZATION=slam
-export RVIZ=false
+export RVIZ=true
 export GUI=true
 export LASER=rplidar
 export START_X=$1
 export START_Y=$2
-export WORLD_NAME=/home/create/utn_worlds/worlds/$3.world
+export WORLD_NAME=/home/create/.gazebo/worlds/$3.world
+export POLYGON_PATH=/home/create/.gazebo/polygons/$3_polygon.pkl
 export VISIBILITY=$4
-export PLOT=false
+export PLOT=true
 
-echo "Running $WORLD_NAME"
-roslaunch blueprint_explore run_everything.launch
+echo "Running $WORLD_NAME, loading polygon from $POLYGON_PATH"
+roslaunch blueprint_explore run_everything.launch&
+rosbag record /map /create1/gts

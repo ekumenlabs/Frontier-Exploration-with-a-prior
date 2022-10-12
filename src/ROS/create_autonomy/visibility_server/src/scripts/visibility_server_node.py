@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Event, Lock, Process
+import os
+import pickle
 import geopandas as gpd
 from FrontierExploration.preprocessing.grid.raycasting import SEEN, OCCUPIED, UNKNOWN
 from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
@@ -122,22 +124,18 @@ BASE_FILES_DIR = "/create_ws/Frontier-Exploration-with-a-prior/Notebooks/files"
     
 if __name__ == '__main__':
     rospy.init_node('VisibilityServer', anonymous=False, log_level=rospy.DEBUG)
-    # TODO expose parameters via parameter server
-
-    file_dir = f"{BASE_FILES_DIR}/small_house_polygon_clean.dxf"
-    layout = gpd.read_file(file_dir)
-
-    bounds = layout.unary_union.bounds
-    tf_to_zero = [1, 0, 0, 1, -bounds[0], -bounds[1]]
 
     start_pos_x = float(rospy.get_param("~start_x"))
     start_pos_y = float(rospy.get_param("~start_y"))
+    polygon_path = rospy.get_param("~polygon_path")
+
+    with open(polygon_path, "rb") as fp:
+        polygon = pickle.load(fp).exterior.buffer(0.2)
     plot = rospy.get_param("~plot")
 
     start_pos = StartPosition(x=start_pos_x, y=start_pos_y)
 
-    layout = layout["geometry"].apply(lambda x: shapely.affinity.affine_transform(x, tf_to_zero)).unary_union.buffer(0.2)
-    visibility_grid = VisibilityGrid(layout=layout, square_size=0.05)
+    visibility_grid = VisibilityGrid(layout=polygon, square_size=0.05)
     try:
         visibility_server = VisibilityServer(grid=visibility_grid, start_pos=start_pos, plot=plot)
         visibility_server.run()

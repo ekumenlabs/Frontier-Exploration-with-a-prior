@@ -1,3 +1,5 @@
+import os
+import pickle
 import random
 from typing import Optional
 from shapely.geometry import LineString, Point, box as Box, Polygon
@@ -8,6 +10,7 @@ from pcg_gazebo.generators.shapes import random_rectangles, \
     random_rectangle, random_points_to_triangulation
 from pcg_gazebo.generators import WorldGenerator
 from shapely.affinity import affine_transform
+from os import makedirs
 
 
 class SynteticWorld:
@@ -32,7 +35,11 @@ class SynteticWorld:
         self.wall_thickness = wall_thickness
         self.wall_height = wall_height
         self.export_models_dir = f"{output_dir}/models"
+        self.export_polygons_dir = f"{output_dir}/polygons"
         self.export_world_dir = f"{output_dir}/worlds"
+        makedirs(self.export_models_dir, exist_ok=True)
+        makedirs(self.export_world_dir, exist_ok=True)
+        makedirs(self.export_polygons_dir, exist_ok=True)
         self.wall_polygon = self.create_polygon()
         self._starting_point = None
         # Create a world generator to place
@@ -87,8 +94,8 @@ class SynteticWorld:
             for _ in range(self.n_internal_rectangles):
                 internal_polygon = None
                 while internal_polygon is None or not wall_polygon.intersects(internal_polygon):
-                    rand_x = random.uniform(min_x, max_x)
-                    rand_y = random.uniform(min_y, max_y)
+                    rand_x = random.uniform(min_x/10, max_x/10)
+                    rand_y = random.uniform(min_y/10, max_y/10)
 
                     left = Point([rand_x, rand_y])
                     bottom = Point([rand_x, rand_y - height])
@@ -119,7 +126,7 @@ class SynteticWorld:
             polygon=self.wall_polygon,
             thickness=self.wall_thickness,
             height=self.wall_height,
-            pose=[centroid.x-self.wall_thickness, centroid.y-self.wall_thickness, self.wall_height / 2., 0, 0, 0],
+            pose=[centroid.x, centroid.y, self.wall_height / 2., 0, 0, 0],
             extrude_boundaries=True,
             color='xkcd')
         walls_model.name = self.world_name + '_walls'
@@ -272,6 +279,10 @@ class SynteticWorld:
             filename=self.world_generator.world.name + '.world',
             models_output_dir=self.export_models_dir,
             overwrite=True)
+        # Export walls polygon to file.
+        polygon_filename = self.world_generator.world.name + '_polygon.pkl'
+        with open(os.path.join(self.export_polygons_dir, polygon_filename), "wb") as fp:
+            pickle.dump(obj=self.wall_polygon, file=fp)
 
     @property
     def total_area(self):
