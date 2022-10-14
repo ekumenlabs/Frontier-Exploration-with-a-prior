@@ -1,6 +1,6 @@
 transform_tolerance: 0.25
-robot_radius: 0.095
-track_unknown_space: true   # true needed for disabling global path planning through unknown space
+robot_radius: 0.20
+track_unknown_space: false   # true needed for disabling global path planning through unknown space
 raytrace_range: 3.0
 footprint_padding: 0.0
 

@@ -34,6 +34,7 @@ def run_dev_environment(command, ros="melodic", gazebo="9"):
     docker_args.append(f"--user {UID}:{UID}")
     # Keep user settings
     docker_args.append(f"--volume $HOME/.gazebo/:{docker_home}/.gazebo/")
+    docker_args.append(f"--volume $HOME/.pcg/:{docker_home}/.pcg/")
     # docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
     # Mount workspace
     docker_args.append(f"--volume {os.path.dirname(ut.get_repo_root())}/Frontier-Exploration-with-a-prior/src/ROS/create_autonomy:/{WS_NAME}/src")

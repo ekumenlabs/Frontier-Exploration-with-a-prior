@@ -49,8 +49,6 @@ class SynteticWorld:
         self.n_cubes = None
         self.n_cylinders = None
         self.n_spheres = None
-        self.set_random_roll = False
-        self.set_random_pitch = False
 
     def create_polygon(self):
         # Generate the reference polygon for the wall boundaries
@@ -188,40 +186,8 @@ class SynteticWorld:
             )
             models['box'] = self.n_cubes
 
-        if self.n_cylinders is not None and self.n_cylinders > 0:
-            self.world_generator.add_asset(
-                tag='cylinder',
-                description=dict(
-                    type='cylinder',
-                    args=dict(
-                        radius="__import__('numpy').random.uniform(0.1, 1)",
-                        length="__import__('numpy').random.uniform(0.1, 1)",
-                        name='cylinder',
-                        color='xkcd'
-                    )
-                )
-            )
-            models['cylinder'] = self.n_cylinders
-
-        if self.n_spheres is not None and self.n_spheres > 0:
-            self.world_generator.add_asset(
-                tag='sphere',
-                description=dict(
-                    type='sphere',
-                    args=dict(
-                        radius="__import__('numpy').random.uniform(0.1, 1)",
-                        name='sphere',
-                        color='xkcd'
-                    )
-                )
-            )
-            models['sphere'] = self.n_spheres
 
         orientation_dofs = ['yaw']
-        if self.set_random_roll:
-            orientation_dofs.append('roll')
-        if self.set_random_pitch:
-            orientation_dofs.append('pitch')
 
         # Add placement policy
         placement_policy = dict(
@@ -281,6 +247,7 @@ class SynteticWorld:
             overwrite=True)
         # Export walls polygon to file.
         polygon_filename = self.world_generator.world.name + '_polygon.pkl'
+
         with open(os.path.join(self.export_polygons_dir, polygon_filename), "wb") as fp:
             pickle.dump(obj=self.wall_polygon, file=fp)
 

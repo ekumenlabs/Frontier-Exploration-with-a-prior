@@ -22,7 +22,11 @@ export POLYGON_PATH=/home/create/.gazebo/polygons/$3_polygon.pkl
 export VISIBILITY=$4
 export PLOT=true
 OUTPUTS_BASE_DIR=/create_ws/src/outputs
-OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3"
+if [ $VISIBILITY == 'true' ]; then
+    OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3/UTN"
+else
+    OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3/MARYLAND"
+fi
 
 echo "Running $WORLD_NAME, loading polygon from $POLYGON_PATH"
 mkdir -p $OUTPUT_DIR && cd $OUTPUT_DIR && rosbag record /map /create1/gts&

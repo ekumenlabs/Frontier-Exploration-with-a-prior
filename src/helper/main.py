@@ -1,5 +1,4 @@
 #!./venv/bin/python3
-from curses.textpad import rectangle
 import typer
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -116,7 +115,12 @@ def create_random(
             ids = [id for id in range(n_worlds)]
             futures = [executor.submit(create_and_save_partial, id=id) for id in ids]
             for future in as_completed(futures):
-                name, world = future.result()
+                res = future.result()
+                if res is None:
+                    print(f"Failed to create world, skipping.")
+                    continue
+
+                name, world = res
                 print(f"Created world {name}")
                 worlds[name] = {
                     "world":world,
@@ -130,7 +134,7 @@ def run_docker(
     worlds_df_path: str = typer.Option(
         help="Dataframe to use for Docker instance creations.", default="worlds_df.pkl")
 ):
-    DockerHandler(worlds_df_path).run()
+    DockerHandler(worlds_df_path).run_all()
 
 
 if __name__ == "__main__":

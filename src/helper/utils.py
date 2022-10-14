@@ -2,12 +2,15 @@ import subprocess
 import os
 import pickle
 import random
+from time import sleep
 from typing import Any, Dict
 
 import pandas as pd
 
 from FrontierExploration.preprocessing.layout.syntetic import SynteticWorld
 from ROS.create_autonomy.docker import docker_utils as ut
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
 
 def create_and_save(
     file: str,
@@ -34,7 +37,10 @@ def create_and_save(
         wall_thickness=wall_thickness,
         wall_height=wall_height
     )
-    world.create_world(n_cubes=random.randint(0, cubes), cube_size=cube_size, show=show)
+    try:
+        world.create_world(n_cubes=random.randint(0, cubes), cube_size=cube_size, show=show)
+    except:
+        return None
     return file, world
 
 def save_worlds_df(worlds: Dict[str, Any], output_file_dir: str):
@@ -55,15 +61,24 @@ class DockerHandler:
         self._worlds_df = None
         self.worlds_df_path = worlds_df_path
 
-    def run(self):
-        command = self.get_command()
-        if not self.is_running():
-            print("Creating container")
-            self.run_dev_environment(command=command)
-        print("Attaching to container")
-        self.attach_dev_environment()
+    def run(self, world_name:str, visibility:str):
+        command = self.get_command(world_name, visibility)
+        name = self.get_name(world_name, visibility)
+        self.run_dev_environment(name=name, command=command)
 
-    def run_dev_environment(self, command="bash", ros="melodic", gazebo="9"):
+    def run_all(self):
+        futures = []
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            for world in self.worlds_df.index:
+                futures.append(pool.submit(self.run, world, "false"))
+                futures.append(pool.submit(self.run, world, "true"))
+            for fut in tqdm(as_completed(futures)):
+                fut.result()
+
+
+
+
+    def run_dev_environment(self, name: str, command="bash", ros="melodic", gazebo="9"):
         user_docker = "create"
         docker_home = f"/home/{user_docker}"
         dockerfile  = f"create_ros_{ros}_gazebo{gazebo}"
@@ -76,7 +91,7 @@ class DockerHandler:
         docker_args.append("--volume /tmp/.X11-unix:/tmp/.X11-unix:rw")
         docker_args.append(f"--volume $HOME/.Xauthority:{docker_home}/.Xauthority:rw")
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
-        docker_args.append(f"--name {self.IMAGE_NAME}")
+        docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
         docker_args.append("--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
@@ -113,7 +128,7 @@ class DockerHandler:
         docker_args.append("-e ROS_MASTER_URI=http://localhost:11311")
         docker_args.append(f"--workdir /{self.WS_NAME}/")
         # run dettached
-        docker_args.append(f"-d")
+        # docker_args.append(f"-d")
 
         if ut.is_nvidia():
             docker_args.append("--gpus all")
@@ -153,7 +168,10 @@ class DockerHandler:
                 self._worlds_df = pickle.load(f)
         return self._worlds_df
 
-    def get_command(self):
-        world_name = self.worlds_df.index[0]
-        start_x, start_y = self.worlds_df.loc[world_name]["starting_point"]
-        return f"./src/run_exploration.sh {start_x} {start_y} {world_name} true"
+    def get_command(self, world_name: str, visibility: bool):
+        row = self.worlds_df.loc[world_name]
+        start_x, start_y = row["starting_point"]
+        return f"./src/run_exploration.sh {start_x} {start_y} {world_name} {visibility}"
+
+    def get_name(self, world_name: str, visibility: bool):
+        return f"{world_name}_{visibility}"
