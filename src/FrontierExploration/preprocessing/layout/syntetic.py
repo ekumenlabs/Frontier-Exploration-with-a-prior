@@ -89,9 +89,12 @@ class SynteticWorld:
             min_x, min_y, max_x, max_y = wall_polygon.bounds
             width = max_x - min_x
             height = max_y - min_y
+            MAX_ATTEMPTS = 100
             for _ in range(self.n_internal_rectangles):
                 internal_polygon = None
-                while internal_polygon is None or not wall_polygon.intersects(internal_polygon):
+                attempts = 0
+                while attempts < MAX_ATTEMPTS and (internal_polygon is None or not wall_polygon.intersects(internal_polygon)):
+                    attempts+=1
                     rand_x = random.uniform(min_x/10, max_x/10)
                     rand_y = random.uniform(min_y/10, max_y/10)
 

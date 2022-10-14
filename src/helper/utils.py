@@ -39,7 +39,8 @@ def create_and_save(
     )
     try:
         world.create_world(n_cubes=random.randint(0, cubes), cube_size=cube_size, show=show)
-    except:
+    except Exception as e:
+        print(e)
         return None
     return file, world
 
@@ -69,10 +70,14 @@ class DockerHandler:
 
     def run_all(self):
         futures = []
-        with ThreadPoolExecutor(max_workers=1) as pool:
+        i = 0
+        with ThreadPoolExecutor(max_workers=3) as pool:
             for world in self.worlds_df.index:
+                i+=1
                 futures.append(pool.submit(self.run, world, "false"))
                 futures.append(pool.submit(self.run, world, "true"))
+                if i > 10:
+                    break
             for fut in tqdm(as_completed(futures)):
                 fut.result()
 
@@ -91,7 +96,7 @@ class DockerHandler:
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
         docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
-        docker_args.append("--network host")
+        # docker_args.append(f"--network algo{self.UID}")
         docker_args.append(f"--user {self.UID}:{self.UID}")
         if self.models_path is not None:
             docker_args.append(f"--volume {self.models_path}:{self.models_path}")

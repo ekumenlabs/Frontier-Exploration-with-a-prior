@@ -12,15 +12,15 @@ cd /create_ws/Frontier-Exploration-with-a-prior && python3.8 -m pip install -e .
 cd /create_ws && catkin_make
 source devel/setup.bash
 export LOCALIZATION=slam
-export RVIZ=true
-export GUI=true
+export RVIZ=false
+export GUI=false
 export LASER=rplidar
 export START_X=$1
 export START_Y=$2
 export WORLD_NAME=/home/create/.gazebo/worlds/$3.world
 export POLYGON_PATH=/home/create/.gazebo/polygons/$3_polygon.pkl
 export VISIBILITY=$4
-export PLOT=true
+export PLOT=false
 OUTPUTS_BASE_DIR=/create_ws/src/outputs
 if [ $VISIBILITY == 'true' ]; then
     OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3/UTN"
