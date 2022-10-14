@@ -57,9 +57,10 @@ class DockerHandler:
     WS_NAME    = "create_ws"
     UID        = ut.get_uid()
 
-    def __init__(self, worlds_df_path: str):
+    def __init__(self, worlds_df_path: str, models_path: str = None):
         self._worlds_df = None
         self.worlds_df_path = worlds_df_path
+        self.models_path = models_path
 
     def run(self, world_name:str, visibility:str):
         command = self.get_command(world_name, visibility)
@@ -75,10 +76,7 @@ class DockerHandler:
             for fut in tqdm(as_completed(futures)):
                 fut.result()
 
-
-
-
-    def run_dev_environment(self, name: str, command="bash", ros="melodic", gazebo="9"):
+    def run_dev_environment(self, name, command="bash", ros="melodic", gazebo="9"):
         user_docker = "create"
         docker_home = f"/home/{user_docker}"
         dockerfile  = f"create_ros_{ros}_gazebo{gazebo}"
@@ -95,6 +93,8 @@ class DockerHandler:
         docker_args.append("--privileged")
         docker_args.append("--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
+        if self.models_path is not None:
+            docker_args.append(f"--volume {self.models_path}:{self.models_path}")
         # Keep user settings
         docker_args.append(f"--volume $HOME/.gazebo/:{docker_home}/.gazebo/")
         # docker_args.append(f"--volume {temp_volume}/.gazebo/:{docker_home}/.gazebo/")
