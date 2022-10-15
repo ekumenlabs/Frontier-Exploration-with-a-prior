@@ -44,7 +44,7 @@ class SynteticWorld:
         self._starting_point = None
         # Create a world generator to place
         # objects in the world
-        self.world_generator = WorldGenerator()
+        self.world_generator = None
 
         self.n_cubes = None
         self.n_cylinders = None
@@ -56,13 +56,13 @@ class SynteticWorld:
             if self.n_rectangles > 1:
                 wall_polygon = random_rectangles(
                     n_rect=self.n_rectangles,
-                    x_center_min=-self.x_room_range / 2.,
-                    x_center_max=self.x_room_range / 2.,
-                    y_center_min=-self.y_room_range / 2.,
-                    y_center_max=self.y_room_range / 2.,
-                    delta_x_min=self.x_room_range / 2.,
+                    x_center_min=-self.x_room_range,
+                    x_center_max=self.x_room_range,
+                    y_center_min=-self.y_room_range,
+                    y_center_max=self.y_room_range,
+                    delta_x_min=self.x_room_range/2,
                     delta_x_max=self.x_room_range,
-                    delta_y_min=self.y_room_range / 2.,
+                    delta_y_min=self.y_room_range/2,
                     delta_y_max=self.y_room_range)
             elif self.n_rectangles == 1:
                 wall_polygon = random_rectangle(
@@ -93,7 +93,7 @@ class SynteticWorld:
             for _ in range(self.n_internal_rectangles):
                 internal_polygon = None
                 attempts = 0
-                while attempts < MAX_ATTEMPTS and (internal_polygon is None or not wall_polygon.intersects(internal_polygon)):
+                while attempts < MAX_ATTEMPTS and (internal_polygon is None or not wall_polygon.contains(internal_polygon)):
                     attempts+=1
                     rand_x = random.uniform(min_x/10, max_x/10)
                     rand_y = random.uniform(min_y/10, max_y/10)
@@ -117,7 +117,9 @@ class SynteticWorld:
         n_cubes: Optional[int] = None,
         cube_size: Optional[float] = 1,
         show=True):
-
+        # Create a world generator to place
+        # objects in the world
+        self.world_generator = WorldGenerator()
         self.n_cubes = n_cubes
 
         # Create the wall model based on the extruded
