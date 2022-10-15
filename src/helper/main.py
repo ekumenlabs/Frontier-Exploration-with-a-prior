@@ -130,6 +130,17 @@ def create_random(
 
 
 @app.command()
+def run(
+    worlds_df_path: str = typer.Option(
+        help="Dataframe to use for Docker instance creations.", default="worlds_df.pkl"),
+    models_path: str = typer.Option(
+        help="Models directory path where worlds models are stored.", default=None),
+    world_name: str = typer.Option(
+        help="Models directory path where worlds models are stored.", default=None)
+):
+    DockerHandler(worlds_df_path, models_path=models_path).run(world_name=world_name, visibility="true")
+
+@app.command()
 def run_docker(
     worlds_df_path: str = typer.Option(
         help="Dataframe to use for Docker instance creations.", default="worlds_df.pkl"),
