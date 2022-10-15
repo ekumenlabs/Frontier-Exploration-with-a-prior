@@ -4,11 +4,11 @@ from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from typing import Optional, List
-from tqdm import tqdm
+import pandas as pd
 
 from FrontierExploration.preprocessing.layout.reader import LayoutReader
 from FrontierExploration.preprocessing.layout.syntetic import SynteticWorld
-from helper.utils import DockerHandler, create_and_save, save_worlds_df
+from helper.utils import DockerHandler, create_and_save, create_world_model, save_worlds_df
 
 app = typer.Typer(help="Hi Im the Frontier Exploration Scripting Helper!")
 
@@ -47,6 +47,46 @@ def create_world(
     layout_reader = LayoutReader(file_name=file, file_extension="dxf", files_dir=f"{file_dir}/")
     layout_reader.create_gazebo_model(output_file_dir=output_file_dir, show=show)
 
+@app.command()
+def create_world_from_df(
+    file: str = typer.Option(
+        help="DataFrame file to use for .world creation.", default="worlds_df.pkl"),
+    file_dir: Optional[str] = typer.Option(
+        help="Workspace directory.", default="."),
+    output_file_dir: Optional[str] = typer.Option(
+        help="Directory to save Gazebo files.", default="/home/.gazebo"),
+    cubes:  Optional[int] = typer.Option(
+        help="Random cubes to add inside world.", default=0),
+    cube_size:  Optional[float] = typer.Option(
+        help="Random cubes max size.", default=10),
+    show: Optional[bool] = typer.Option(
+        help="Flag for showing Gazebo world after creation.", default=False),
+):
+    print("Starting world creation...")
+    worlds = {}
+    worlds_df = pd.read_pickle(f"{file_dir}/{file}")
+    create_world_model_partial = partial(
+        create_world_model,
+        cubes=cubes,
+        cube_size=cube_size,
+        show=show
+    )
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(create_world_model_partial, file=index, world=worlds_df.loc[index]["world"]) for index in worlds_df.index]
+        for future in as_completed(futures):
+            res = future.result()
+            if res is None:
+                print(f"Failed to create world, skipping.")
+                continue
+
+            name, world = res
+            print(f"Created world {name}")
+            worlds[name] = {
+                "world":world,
+                "world_dir":f"{output_file_dir}worlds/{name}.world"
+            }
+    print(worlds)
+    save_worlds_df(worlds, output_file_dir=output_file_dir, create_models=True)
 
 @app.command()
 def create_random(
@@ -75,7 +115,9 @@ def create_random(
     cube_size:  Optional[float] = typer.Option(
         help="Random cubes max size.", default=10),
     n_worlds: Optional[int] = typer.Option(
-        help="Amount of worlds to create.", default=1)
+        help="Amount of worlds to create.", default=1),
+    create_models: Optional[bool] = typer.Option(
+        help="Flag that indicates if the worlds should be created or just the world polygon and df.", default=True),
 ):
     worlds = {}
     if n_worlds == 1:
@@ -90,7 +132,8 @@ def create_random(
             wall_thickness=wall_thickness,
             wall_height=wall_height
         )
-        world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
+        if create_models:
+            world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
         worlds[file] = {
                     "world":world,
                     "world_dir":f"{output_file_dir}worlds/{file}.world"
@@ -109,7 +152,8 @@ def create_random(
             wall_height=wall_height,
             cubes=cubes,
             cube_size=cube_size,
-            show=show
+            show=show,
+            create_models=create_models
         )
         with ThreadPoolExecutor(max_workers=10) as executor:
             ids = [id for id in range(n_worlds)]
@@ -126,7 +170,7 @@ def create_random(
                     "world":world,
                     "world_dir":f"{output_file_dir}worlds/{name}.world"
                 }
-    save_worlds_df(worlds, output_file_dir=output_file_dir)
+                save_worlds_df(worlds, output_file_dir=output_file_dir, create_models=create_models)
 
 
 @app.command()

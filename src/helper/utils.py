@@ -1,9 +1,8 @@
 import subprocess
 import os
 import pickle
-import random
-from time import sleep
 from typing import Any, Dict
+from shapely.geometry import Polygon
 
 import pandas as pd
 
@@ -24,30 +23,43 @@ def create_and_save(
     cubes: int,
     cube_size: float,
     show: bool,
+    create_models: bool,
     id: int,
 ):
     file = f"{file}_{id}"
     world = SynteticWorld(
         file,
         output_file_dir,
-        n_rectangles=random.randint(1, rectangles),
+        n_rectangles=rectangles,
         n_in_rectangles=n_in_rectangles,
         x_room_range=x_range,
         y_room_range=y_range,
         wall_thickness=wall_thickness,
         wall_height=wall_height
     )
+    if not isinstance(world.wall_polygon, Polygon):
+        return None
+    if create_models:
+        try:
+            _, world = create_world_model(file, world, cubes=cubes, cube_size=cube_size, show=show)
+        except Exception as e:
+            print(e)
+            return None
+    return file, world
+
+def create_world_model(file:str, world: SynteticWorld, cubes: int, cube_size: float, show: bool):
     try:
-        world.create_world(n_cubes=random.randint(0, cubes), cube_size=cube_size, show=show)
+        world.create_world(n_cubes=cubes, cube_size=cube_size, show=show)
+        return file, world
     except Exception as e:
         print(e)
         return None
-    return file, world
 
-def save_worlds_df(worlds: Dict[str, Any], output_file_dir: str):
+def save_worlds_df(worlds: Dict[str, Any], output_file_dir: str, create_models: bool):
     worlds_df = pd.DataFrame(worlds).T
-    worlds_df["starting_point"] = worlds_df["world"].apply(lambda x: x.starting_point.coords[0])
-    worlds_df["free_area"] = worlds_df["world"].apply(lambda x: x.free_space_polygon.area)
+    if create_models:
+        worlds_df["starting_point"] = worlds_df["world"].apply(lambda x: x.starting_point.coords[0])
+        worlds_df["free_area"] = worlds_df["world"].apply(lambda x: x.free_space_polygon.area)
     with open(f"{output_file_dir}/worlds_df.pkl", "wb") as f:
         pickle.dump(worlds_df, f)
 
