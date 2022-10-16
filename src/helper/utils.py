@@ -108,7 +108,7 @@ class DockerHandler:
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
         docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
-        # docker_args.append(f"--network algo{self.UID}")
+        docker_args.append(f"--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
         if self.models_path is not None:
             docker_args.append(f"--volume {self.models_path}:{self.models_path}")
@@ -155,13 +155,10 @@ class DockerHandler:
         docker_args = ' '.join(docker_args)
         docker_command = f"docker run {docker_args} {dockerfile} {command}"
 
-        ut.create_directory(f"{temp_volume}/.gazebo/")
-        ut.create_directory(f"{temp_volume}/ws/build/")
-        ut.create_directory(f"{temp_volume}/ws/devel/")
 
-        ut.run_command("xhost +local:root")
+        # ut.run_command("xhost +local:root")
         ut.run_command(docker_command)
-        ut.run_command("xhost -local:root")
+        # ut.run_command("xhost -local:root")
 
 
     def attach_dev_environment(self, command="bash"):

@@ -26,7 +26,7 @@ class VisibilityGrid():
             geometries.append(shape(shapedict))
             values.append(value)
         self._occupancy_df = gpd.GeoDataFrame({"geometry":geometries, "status": values})
-        self._occupancy_df["geometry"] = self._occupancy_df.simplify(tolerance=0.3, preserve_topology=True)
+        self._occupancy_df["geometry"] = self._occupancy_df.simplify(tolerance=0.3, preserve_topology=False)
 
     
     def visibility(self, x: float, y: float, stop_event: Event) -> float:

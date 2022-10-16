@@ -1,14 +1,16 @@
-#!./venv/bin/python3
+#!./venv/bin/python3.8
 import typer
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from typing import Optional, List
 import pandas as pd
+from os.path import expanduser
 
 from FrontierExploration.preprocessing.layout.reader import LayoutReader
 from FrontierExploration.preprocessing.layout.syntetic import SynteticWorld
 from helper.utils import DockerHandler, create_and_save, create_world_model, save_worlds_df
+
 
 app = typer.Typer(help="Hi Im the Frontier Exploration Scripting Helper!")
 
@@ -54,7 +56,7 @@ def create_world_from_df(
     file_dir: Optional[str] = typer.Option(
         help="Workspace directory.", default="."),
     output_file_dir: Optional[str] = typer.Option(
-        help="Directory to save Gazebo files.", default="/home/.gazebo"),
+        help="Directory to save Gazebo files.", default=expanduser("~/.gazebo")),
     cubes:  Optional[int] = typer.Option(
         help="Random cubes to add inside world.", default=0),
     cube_size:  Optional[float] = typer.Option(
@@ -180,9 +182,14 @@ def run(
     models_path: str = typer.Option(
         help="Models directory path where worlds models are stored.", default=None),
     world_name: str = typer.Option(
-        help="Models directory path where worlds models are stored.", default=None)
+        help="Models directory path where worlds models are stored.", default=None),
+    visibility: str = typer.Option(
+        help="Models directory path where worlds models are stored.", default="false"),
+
 ):
-    DockerHandler(worlds_df_path, models_path=models_path).run(world_name=world_name, visibility="true")
+    if visibility not in ("false", "true"):
+        raise RuntimeError(f"Visibility has to be either 'false' or 'true'")
+    DockerHandler(worlds_df_path, models_path=models_path).run(world_name=world_name, visibility="false")
 
 @app.command()
 def run_docker(

@@ -1,19 +1,17 @@
 #!/usr/bin/python3.8
 from dataclasses import dataclass
 from datetime import datetime
-from multiprocessing import Event, Lock, Process
-import os
+from multiprocessing import Event, Lock
 import pickle
-import geopandas as gpd
 from FrontierExploration.preprocessing.grid.raycasting import SEEN, OCCUPIED, UNKNOWN
 from FrontierExploration.preprocessing.grid.visibility_grid import VisibilityGrid
 from FrontierExploration.preprocessing.plotting.live_plot_utils import LivePlotter
 from nav_msgs.msg  import OccupancyGrid
 from visibility_server.srv import Visibility, VisibilityRequest, VisibilityResponse
+from std_msgs.msg import Int64
 import numpy as np
-import shapely
 from math import isclose
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 import rospy
 
@@ -32,6 +30,7 @@ class VisibilityServer(object):
         self._lock = Lock()
         self._grid = grid
         self._start_position = start_pos
+        self._explored_pub = rospy.Publisher("/create1/explored", Int64, queue_size=1)
         self._global_costmap_sub = rospy.Subscriber("/map", OccupancyGrid, self._occupancy_grid_cb)
         self._service_server =  rospy.Service('visibility', Visibility, self._visibility_cb)
         self._plotter = LivePlotter(self._grid, self._lock) if plot else None
@@ -81,6 +80,9 @@ class VisibilityServer(object):
             slice_cpy[slice_cpy == -OCCUPIED] = OCCUPIED
             slice_cpy[slice_cpy == OCCUPIED * OCCUPIED] = OCCUPIED
             self._grid._layout_image[idx_offset_y:idx_offset_y+width, idx_offset_x:idx_offset_x+height] = slice_cpy
+            explored_msg = Int64()
+            explored_msg.data = np.count_nonzero(self._grid._layout_image == SEEN)
+            self._explored_pub.publish(explored_msg)
             self._grid.update_layout()
             print(f"Took {datetime.now() - start} to update the map.")
 

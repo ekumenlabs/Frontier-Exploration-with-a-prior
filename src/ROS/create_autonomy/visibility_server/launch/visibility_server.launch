@@ -11,6 +11,9 @@
       <param name="plot" value="$(arg plot)"/>
   </node>
 
+  <node pkg="visibility_server" type="robot_position_2d.py" name="robot_position">
+      <param name="/use_sim_time" value="true"/>
+  </node>
   <node pkg="visibility_server" type="sentinel.py" name="sentinel"/>
 
 </launch>
