@@ -75,20 +75,82 @@ class BlockStatus(Enum):
     Raycasted = 125
 
 class RayCast:
-    def __init__(self, ray_range: float, start_x: float = 0, start_y: float = 0):
-        self._circle_to_raycast = Point(start_x, start_y).buffer(ray_range)
+    def __init__(self, ray_range: float, start_x: float = 0, start_y: float = 0, num_rays: int = 16):
+        self.start_x = start_x
+        self.start_y = start_y
+        self._num_rays = num_rays
+        self._ray_range = ray_range
+        self.raycast_df = gpd.GeoDataFrame(geometry=[LineString([(start_x, start_y), movement]) for movement in self.directions])
+        self.raycast_df["status"] = BlockStatus.Raycasted.value
+        # self._circle_to_raycast = Point(start_x, start_y).buffer(ray_range)
 
-    def run_on_polygons(self, seen_polygon: Polygon, seen_and_unknown_polygon: Polygon, stop_event: Optional[Event] = None)-> float:
-        self._raycasted_circle = self._circle_to_raycast.intersection(seen_and_unknown_polygon).difference(seen_polygon)
-        self._visibility = 100.0*(self._raycasted_circle.area / self._circle_to_raycast.area)
+    def run_on_polygons(self, seen_polygon: Polygon, unknown_polygon: Polygon, occupied_polygon: Polygon, stop_event: Optional[Event] = None):
+        layout_polygons = [{
+                "geometry": seen_polygon,
+                "status": SEEN
+            },
+            {
+                "geometry": unknown_polygon,
+                "status": UNKNOWN
+            },
+            {
+                "geometry": occupied_polygon,
+                "status": OCCUPIED
+            }
+        ]
+        layout_df = gpd.GeoDataFrame(layout_polygons)
+        self.run_on_df(layout_df)
+
+    def run_on_df(self, layout_df: gpd.GeoDataFrame, stop_event: Optional[Event] = None):
+        for index in layout_df[layout_df["status"] == BlockStatus.Occupied.value].index:
+            if stop_event is not None and stop_event.is_set():
+                return
+            self.intersect_with_polygon(layout_df['geometry'][index],layout_df['status'][index])
+
+        for index in layout_df[layout_df["status"] == BlockStatus.Seen.value].index:
+            if stop_event is not None and stop_event.is_set():
+                return
+            self.intersect_with_polygon(layout_df['geometry'][index], BlockStatus.Seen.value)
+        
+            
+    def intersect_with_polygon(self, polygon: Polygon, block_status: BlockStatus):
+        if block_status == BlockStatus.Occupied.value:
+            self.raycast_df["geometry"] = self.raycast_df["geometry"].apply(self.get_line_to_intersection, args=(polygon,))
+        if block_status == BlockStatus.Seen.value:
+            poly_df = gpd.GeoDataFrame(geometry=[polygon])
+            self.raycast_df["geometry"] = self.raycast_df.overlay(poly_df, how='difference')["geometry"]
+            self.raycast_df.dropna(inplace=True)
+    
+    def get_line_to_intersection(self, line: LineString, polygon: Polygon):
+        origin = self.origin_point
+        if line.intersects(polygon):
+            inter_line = line.difference(polygon)
+            if isinstance(inter_line, MultiLineString):
+                return inter_line[0]
+            return inter_line
+        return line        
 
     @property
-    def visibility(self) -> float:
-        return self._visibility
+    def visibility_percentage(self):
+        return 100*self.visibility/self._ray_range
+    
     @property
-    def raycasted_circle(self) -> Polygon:
-        return self._raycasted_circle
+    def visibility(self):
+        self.raycast_df.dropna(inplace=True)
+        if self.raycast_df.empty:
+            return 0
+        self.raycast_df['length'] = self.raycast_df.apply(lambda row: row[0].length, axis=1)
+        return self.raycast_df['length'].mean()
+    
+    @property
+    def origin_point(self):
+        return Point(self.start_x, self.start_y)
+    
+    @property
+    def directions(self):
+        return [(self._ray_range*np.cos(angle)+self.start_x, self._ray_range*np.sin(angle)+self.start_y) for angle in np.linspace(0, 2 * np.pi, num=self._num_rays, endpoint=False)]
 
-
+    def plot(self, *args, **kwargs):
+        self.raycast_df.plot( *args, **kwargs)
 
 
