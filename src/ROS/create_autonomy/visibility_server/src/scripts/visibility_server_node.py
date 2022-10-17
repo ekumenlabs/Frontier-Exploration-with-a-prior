@@ -98,7 +98,7 @@ class VisibilityServer(object):
             with self._lock:
                 p = pool.submit(self._grid.visibility,x=req.x_map_frame + self._start_position.x, y=req.y_map_frame + self._start_position.y, stop_event=stop_visibility_evt)
                 try:
-                    visibility = int(p.result(timeout=0.5))
+                    visibility = int(p.result(timeout=15.0))
                 except TimeoutError:
                     rospy.logwarn("Timedout getting visibility, returning 0.")
                     stop_visibility_evt.set()

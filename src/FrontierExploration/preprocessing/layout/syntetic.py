@@ -5,12 +5,80 @@ from typing import Optional
 from shapely.geometry import LineString, Point, box as Box, Polygon
 from pcg_gazebo.simulation import SimulationModel, \
     add_custom_gazebo_resource_path
-from pcg_gazebo.generators.creators import extrude
+from pcg_gazebo.generators.creators import mesh
 from pcg_gazebo.generators.shapes import random_rectangles, \
     random_rectangle, random_points_to_triangulation
 from pcg_gazebo.generators import WorldGenerator
 from shapely.affinity import affine_transform
 from os import makedirs
+from shapely.ops import unary_union
+
+from trimesh.creation import extrude_polygon
+from shapely.geometry import Polygon, MultiPolygon
+from trimesh.util import concatenate
+
+def extrude_2(polygon, height, thickness=0, cap_style='round',
+            join_style='round', extrude_boundaries=False):
+
+        # In case the provided polygon are of type Polygon or MultiPolygon,
+        # their boundaries will be extracted
+    exterior = polygon.exterior.buffer(
+        0.3)
+    interiors = []
+    for i in polygon.interiors:
+        interiors.append(i.buffer(0.3))
+    
+    exterior_mesh = extrude_polygon(exterior, height)
+    interior_meshs = [extrude_polygon(i, height) for i in interiors]
+
+    all_meshes = interior_meshs
+    all_meshes.append(exterior_mesh)
+
+
+
+    return concatenate(all_meshes)
+
+
+
+def extrude(
+        polygon,
+        height,
+        thickness=0,
+        cap_style='round',
+        join_style='round',
+        extrude_boundaries=False,
+        name='mesh',
+        pose=[0, 0, 0, 0, 0, 0],
+        color=None,
+        mass=0,
+        inertia=None,
+        use_approximated_inertia=True,
+        approximated_inertia_model='box',
+        visual_parameters=dict(),
+        collision_parameters=dict()):
+
+    generated_mesh = extrude_2(
+        polygon=polygon,
+        height=height,
+        thickness=thickness,
+        cap_style=cap_style,
+        join_style=join_style,
+        extrude_boundaries=extrude_boundaries)
+
+    model = mesh(
+        visual_mesh=generated_mesh,
+        name=name,
+        pose=pose,
+        color=color,
+        mass=mass,
+        inertia=inertia,
+        use_approximated_inertia=use_approximated_inertia,
+        approximated_inertia_model=approximated_inertia_model,
+        visual_parameters=visual_parameters,
+        collision_parameters=collision_parameters
+    )
+
+    return model
 
 
 class SynteticWorld:
@@ -60,10 +128,10 @@ class SynteticWorld:
                     x_center_max=self.x_room_range,
                     y_center_min=-self.y_room_range,
                     y_center_max=self.y_room_range,
-                    delta_x_min=self.x_room_range/2,
-                    delta_x_max=self.x_room_range,
-                    delta_y_min=self.y_room_range/2,
-                    delta_y_max=self.y_room_range)
+                    delta_x_min=6,
+                    delta_x_max=12,
+                    delta_y_min=6,
+                    delta_y_max=12)
             elif self.n_rectangles == 1:
                 wall_polygon = random_rectangle(
                     delta_x_min=self.x_room_range / 2.,
@@ -122,12 +190,13 @@ class SynteticWorld:
         self.world_generator = WorldGenerator()
         self.n_cubes = n_cubes
 
+        print(f"Creating world for {self.world_name}")
         # Create the wall model based on the extruded
         # boundaries of the polygon
         centroid = Box(*self.wall_polygon.bounds).centroid
         walls_model = extrude(
             polygon=self.wall_polygon,
-            thickness=self.wall_thickness,
+            thickness=0.4,
             height=self.wall_height,
             pose=[centroid.x, centroid.y, self.wall_height / 2., 0, 0, 0],
             extrude_boundaries=True,
@@ -238,6 +307,7 @@ class SynteticWorld:
         self.free_space_polygon = self.world_generator.world.get_free_space_polygon(
             ground_plane_models=self.world_generator.world.models.keys(),
             ignore_models=['ground_plane'])
+        _ = self.get_starting_point()
         self.world_generator.world.name = self.world_name
         if show:
             self.world_generator.world.show()
@@ -267,8 +337,7 @@ class SynteticWorld:
         return self._starting_point
 
     def get_border(self, interior: int, exterior: int):
-        polygon = self.free_space_polygon
-        polygon.exterior.coords
+        polygon = self.wall_polygon
         bound_in = LineString(polygon.exterior.coords).buffer(interior)
         bound_ext = LineString(polygon.exterior.coords).buffer(exterior)
         return bound_ext.intersection(polygon).difference(bound_in)
@@ -277,6 +346,11 @@ class SynteticWorld:
         border = self.get_border(interior, exterior)
         minx, miny, maxx, maxy = border.bounds
         pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
-        while not border.contains(pnt):
+        ATTEMPTS = 1e3
+        attempt = 0
+        while not self.free_space_polygon.contains(pnt):
             pnt = Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+            attempt +=1
+            if attempt > ATTEMPTS:
+                raise RuntimeError("Couldnt get starting point")
         return pnt

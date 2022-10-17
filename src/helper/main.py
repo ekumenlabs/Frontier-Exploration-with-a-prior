@@ -73,9 +73,14 @@ def create_world_from_df(
         cube_size=cube_size,
         show=show
     )
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(create_world_model_partial, file=index, world=worlds_df.loc[index]["world"]) for index in worlds_df.index]
         for future in as_completed(futures):
+
+            if future.exception() is not None:
+                print(f"Failed to create world, skipping.")
+                print(future.exception())
+                continue
             res = future.result()
             if res is None:
                 print(f"Failed to create world, skipping.")
@@ -189,7 +194,7 @@ def run(
 ):
     if visibility not in ("false", "true"):
         raise RuntimeError(f"Visibility has to be either 'false' or 'true'")
-    DockerHandler(worlds_df_path, models_path=models_path).run(world_name=world_name, visibility="false")
+    DockerHandler(worlds_df_path, models_path=models_path).run(world_name=world_name, visibility=visibility)
 
 @app.command()
 def run_docker(

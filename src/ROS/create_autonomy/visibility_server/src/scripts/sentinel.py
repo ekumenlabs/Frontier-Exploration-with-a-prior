@@ -16,11 +16,10 @@ class Sentinel():
     def _finished_cb(self
     , _ #type: Bool
     ):
-        check_call(["killall" ,"rosmaster"])
+        check_call(["rosnode" ,"kill", "/sentinel"])
 
     def run(self):
-        while not rospy.is_shutdown():
-            self._rate.sleep()
+        rospy.spin()
 
     
 if __name__ == '__main__':

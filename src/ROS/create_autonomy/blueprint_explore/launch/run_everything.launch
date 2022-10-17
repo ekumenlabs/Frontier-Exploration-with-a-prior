@@ -4,7 +4,8 @@
 
   <arg name="paused"  value="$(optenv PAUSED false)"  doc="Start the simulation paused"/>
   <arg name="debug"   value="$(optenv DEBUG false)" 	doc="Enable debugging with gdb"/>
-  <arg name="verbose" value="$(optenv VERBOSE false)" doc="Enable verbose output in Gazebo"/>
+  <arg name="verbose" value="$(optenv VERBOSE true)" doc="Enable verbose output in Gazebo"/>
+  <arg name="rosbag_out_dir" value="$(optenv ROSBAG_OUT_DIR /tmp)" doc="Where to dump recorded data to."/>
   <arg name="world_name" doc="Select world file to run" value="$(env WORLD_NAME)"/>
 
 
@@ -39,5 +40,7 @@
     <arg name="start_y" default="$(arg pose1_y)"/>
   </include>
 
+ <node pkg="rosbag" type="record" name="record_gts_and_explored"
+       args="record -o $(arg rosbag_out_dir) /create1/explored /create1/travelled_distance"/>   
 
 </launch>

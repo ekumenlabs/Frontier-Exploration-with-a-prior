@@ -82,14 +82,10 @@ class DockerHandler:
 
     def run_all(self):
         futures = []
-        i = 0
         with ThreadPoolExecutor(max_workers=3) as pool:
             for world in self.worlds_df.index:
-                i+=1
                 futures.append(pool.submit(self.run, world, "false"))
                 futures.append(pool.submit(self.run, world, "true"))
-                if i > 10:
-                    break
             for fut in tqdm(as_completed(futures)):
                 fut.result()
 
@@ -108,7 +104,7 @@ class DockerHandler:
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
         docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
-        docker_args.append(f"--network host")
+        # docker_args.append(f"--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
         if self.models_path is not None:
             docker_args.append(f"--volume {self.models_path}:{self.models_path}")
@@ -156,9 +152,9 @@ class DockerHandler:
         docker_command = f"docker run {docker_args} {dockerfile} {command}"
 
 
-        # ut.run_command("xhost +local:root")
+        ut.run_command("xhost +local:root")
         ut.run_command(docker_command)
-        # ut.run_command("xhost -local:root")
+        ut.run_command("xhost -local:root")
 
 
     def attach_dev_environment(self, command="bash"):
