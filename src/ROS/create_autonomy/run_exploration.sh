@@ -20,7 +20,7 @@ export START_Y=$2
 export WORLD_NAME=/home/create/.gazebo/worlds/$3.world
 export POLYGON_PATH=/home/create/.gazebo/polygons/$3_polygon.pkl
 export VISIBILITY=$4
-export PLOT=false
+export PLOT=true
 OUTPUTS_BASE_DIR=/create_ws/src/outputs
 if [ $VISIBILITY == 'true' ]; then
     OUTPUT_DIR="$OUTPUTS_BASE_DIR/$3/UTN"

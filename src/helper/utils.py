@@ -104,7 +104,7 @@ class DockerHandler:
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
         docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
-        # docker_args.append(f"--network host")
+        docker_args.append(f"--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
         if self.models_path is not None:
             docker_args.append(f"--volume {self.models_path}:{self.models_path}")
