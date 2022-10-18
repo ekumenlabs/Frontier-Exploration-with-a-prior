@@ -57,11 +57,11 @@ COPY dependencies.repos ${DEPS_WS}/src/dependencies.repos
 RUN vcs import . < dependencies.repos
 WORKDIR ${DEPS_WS}
 # libudev is broken as of recent past. we need to install manually for rosdep step not to crash.
-ADD http://archive.ubuntu.com/ubuntu/pool/main/s/systemd/libudev1_237-3ubuntu10_amd64.deb libudev1_237-3ubuntu10_amd64.deb
-RUN dpkg -i libudev1_237-3ubuntu10_amd64.deb
-ADD http://archive.ubuntu.com/ubuntu/pool/main/s/systemd/libudev-dev_237-3ubuntu10_amd64.deb libudev-dev_237-3ubuntu10_amd64.deb
-RUN dpkg -i libudev-dev_237-3ubuntu10_amd64.deb
-RUN apt-get update && apt-get install -y libudev-dev
+RUN rm -rf /var/cache/apt/archives/udev_* && apt purge -y udev
+ADD http://archive.ubuntu.com/ubuntu/pool/main/s/systemd/libudev1_237-3ubuntu10.56_amd64.deb libudev1_237-3ubuntu10.56_amd64.deb
+RUN dpkg -i libudev1_237-3ubuntu10.56_amd64.deb
+ADD http://archive.ubuntu.com/ubuntu/pool/main/s/systemd/libudev-dev_237-3ubuntu10.56_amd64.deb libudev-dev_237-3ubuntu10.56_amd64.deb
+RUN dpkg -i libudev-dev_237-3ubuntu10.56_amd64.deb
 RUN apt-get update && apt-get upgrade -y
 USER ${USER}
 RUN rosdep install --from-paths src --rosdistro=${ROS1_DISTRO} -yi -r --os=ubuntu:bionic
@@ -79,9 +79,9 @@ RUN apt-get update && \
     xargs -a ${DEPS_FILE} apt-get install -y
 RUN rm ${DEPS_FILE}
 RUN python3.8 -m pip install --no-cache git+https://github.com/ekumenlabs/Frontier-Exploration-with-a-prior.git@master 
-RUN apt-get install python3-catkin-pkg-modules -y
+RUN apt-get install python3-catkin-pkg-modules -y python3-dev python3-pip
 RUN apt-get install python3-rospkg-modules -y
 RUN apt-get install psmisc -y
-RUN python3.8 -m pip install netifaces
+RUN python3.8 -m pip install --upgrade pip && python3.8 -m pip install netifaces
 
 USER $USER

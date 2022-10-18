@@ -92,7 +92,7 @@ class DockerHandler:
     def run_dev_environment(self, name, command="bash", ros="melodic", gazebo="9"):
         user_docker = "create"
         docker_home = f"/home/{user_docker}"
-        dockerfile  = f"create_ros_{ros}_gazebo{gazebo}"
+        dockerfile  = f"create_ros_utn"
         temp_volume = f"$HOME/.{self.IMAGE_NAME}"
 
         docker_args = []
@@ -159,6 +159,11 @@ class DockerHandler:
 
     def attach_dev_environment(self, command="bash"):
         command = f"docker exec -it --user {self.UID}:{self.UID} {self.IMAGE_NAME} {command}"
+        ut.run_command(command)
+
+    @staticmethod
+    def build_dev_environment(dockerfile_path: str = ".", image_name: str = "create_ros_utn"):
+        command = f"docker build {dockerfile_path} -t {image_name}"
         ut.run_command(command)
 
 

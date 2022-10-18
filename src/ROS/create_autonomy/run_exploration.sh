@@ -8,7 +8,7 @@ else
     echo "Starting to map with start_x: $1, start_y: $2, world: $3 , use_visibility: $4"
 fi
 
-cd /create_ws/Frontier-Exploration-with-a-prior && python3.8 -m pip install -e .
+# cd /create_ws/Frontier-Exploration-with-a-prior && python3.8 -m pip install -e .
 cd /create_ws && catkin_make
 source devel/setup.bash
 export LOCALIZATION=slam

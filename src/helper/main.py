@@ -205,6 +205,10 @@ def run_docker(
 ):
     DockerHandler(worlds_df_path, models_path=models_path).run_all()
 
+@app.command()
+def build():
+    DockerHandler.build_dev_environment()
+
 
 if __name__ == "__main__":
     app()
