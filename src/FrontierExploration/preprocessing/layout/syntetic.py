@@ -307,6 +307,7 @@ class SynteticWorld:
         self.free_space_polygon = self.world_generator.world.get_free_space_polygon(
             ground_plane_models=self.world_generator.world.models.keys(),
             ignore_models=['ground_plane'])
+        self.free_space_polygon = self.free_space_polygon.intersection(self.wall_polygon)
         _ = self.get_starting_point()
         self.world_generator.world.name = self.world_name
         if show:

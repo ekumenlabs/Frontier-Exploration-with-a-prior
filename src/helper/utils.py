@@ -1,6 +1,8 @@
+import logging
 import subprocess
 import os
 import pickle
+from threading import Lock
 from typing import Any, Dict
 from shapely.geometry import Polygon
 
@@ -71,18 +73,36 @@ class DockerHandler:
     UID        = ut.get_uid()
 
     def __init__(self, worlds_df_path: str, models_path: str = None):
-        self._worlds_df = None
-        self.worlds_df_path = worlds_df_path
+        self._worlds_df_lock = Lock()
+        self._worlds_df_path = worlds_df_path
+        self._worlds_df = pd.read_pickle(worlds_df_path)
         self.models_path = models_path
 
     def run(self, world_name:str, visibility:str):
-        command = self.get_command(world_name, visibility)
-        name = self.get_name(world_name, visibility)
+        with self._worlds_df_lock:
+            command = self.get_command(world_name, visibility)
+            name = self.get_name(world_name, visibility)
+            row = self._worlds_df.loc[world_name]
+            column_to_select = f"finished_{visibility}"
+            if column_to_select not in self.worlds_df.columns:
+                self._worlds_df[column_to_select] = False
+                self._worlds_df.to_pickle(self._worlds_df_path)
+            else:
+                finished = row[column_to_select]
+        
+        if finished:
+            logging.info(f"Not running world {world_name} , with visibility {visibility} because of it already being finished.")
+            return
         self.run_dev_environment(name=name, command=command)
+        with self._worlds_df_lock:
+            self._worlds_df.loc[world_name, column_to_select] = True
+            self._worlds_df.to_pickle(self._worlds_df_path)
+
 
     def run_all(self):
         futures = []
-        with ThreadPoolExecutor(max_workers=3) as pool:
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
             for world in self.worlds_df.index:
                 futures.append(pool.submit(self.run, world, "false"))
                 futures.append(pool.submit(self.run, world, "true"))
@@ -104,7 +124,7 @@ class DockerHandler:
         docker_args.append(f"--volume $HOME/.bash_history:{docker_home}/.bash_history:rw")
         docker_args.append(f"--name {name}")
         docker_args.append("--privileged")
-        docker_args.append(f"--network host")
+        # docker_args.append(f"--network host")
         docker_args.append(f"--user {self.UID}:{self.UID}")
         if self.models_path is not None:
             docker_args.append(f"--volume {self.models_path}:{self.models_path}")
@@ -145,7 +165,7 @@ class DockerHandler:
 
         if ut.is_nvidia():
             docker_args.append("--gpus all")
-            dockerfile = f"create_{ros}_nvidia"
+            # dockerfile = f"create_{ros}_nvidia"
 
         # Join arguments together separated by a space
         docker_args = ' '.join(docker_args)
@@ -178,9 +198,6 @@ class DockerHandler:
 
     @property
     def worlds_df(self):
-        if self._worlds_df is None:
-            with open(self.worlds_df_path, "rb") as f:
-                self._worlds_df = pickle.load(f)
         return self._worlds_df
 
     def get_command(self, world_name: str, visibility: bool):

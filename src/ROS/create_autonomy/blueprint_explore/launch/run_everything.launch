@@ -41,6 +41,6 @@
   </include>
 
  <node pkg="rosbag" type="record" name="record_gts_and_explored"
-       args="record -o $(arg rosbag_out_dir) /create1/explored /create1/travelled_distance"/>   
+       args="record -o $(arg rosbag_out_dir) /create1/explored /create1/travelled_distance /create1/gts"/>   
 
 </launch>

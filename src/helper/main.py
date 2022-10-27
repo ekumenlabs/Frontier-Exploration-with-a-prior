@@ -92,8 +92,8 @@ def create_world_from_df(
                 "world":world,
                 "world_dir":f"{output_file_dir}worlds/{name}.world"
             }
-    print(worlds)
-    save_worlds_df(worlds, output_file_dir=output_file_dir, create_models=True)
+            save_worlds_df(worlds, output_file_dir=output_file_dir, create_models=True)
+    # print(worlds)
 
 @app.command()
 def create_random(

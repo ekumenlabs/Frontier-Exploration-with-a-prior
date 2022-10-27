@@ -91,7 +91,7 @@ std::vector<Frontier> FrontierSearch::searchFrom(geometry_msgs::Point position)
   // set costs of frontiers
   if(use_visibility_){
     for (auto& frontier : frontier_list) {
-      frontier.cost = frontierVisibilityCost(frontier);
+      frontier.cost = frontierVisibilityCost(frontier) * frontierCost(frontier);
     }
   }
   else{
