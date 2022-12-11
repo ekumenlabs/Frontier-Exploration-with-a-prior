@@ -1,14 +1,14 @@
 geopandas==0.10.2
-pandas==1.3.5
+pandas==1.5.1
 ezdxf==0.17.2
-shapely==1.8.2
+shapely==1.7.0
 matplotlib
 evo
 numpy
 dataclasses
 tqdm
 notebook
-pcg-gazebo
+pcg-gazebo==0.7.12
 dash
 markupsafe==2.0.1
 rasterio
